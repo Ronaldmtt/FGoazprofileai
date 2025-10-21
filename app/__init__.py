@@ -10,6 +10,11 @@ def create_app(config_class=Config):
     
     db.init_app(app)
     
+    @app.template_filter('chr')
+    def chr_filter(value):
+        """Convert number to ASCII character (0->A, 1->B, etc.)"""
+        return chr(65 + int(value))
+    
     with app.app_context():
         from app.routes import auth, session, items, responses, admin
         

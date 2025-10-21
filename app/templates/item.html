@@ -30,11 +30,11 @@
                 <input 
                     type="radio" 
                     name="answer" 
-                    value="{{ loop.index0 | chr(65) }}"
+                    value="{{ loop.index0 | chr }}"
                     x-model="answer"
                     class="mt-1"
                 >
-                <span class="ml-3 text-gray-700">{{ choice }}</span>
+                <span class="ml-3 text-gray-700"><strong>{{ loop.index0 | chr }}.</strong> {{ choice }}</span>
             </label>
             {% endfor %}
         </div>
