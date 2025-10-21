@@ -10,6 +10,11 @@ import logging
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 logger = logging.getLogger(__name__)
 
+@bp.route('/')
+def index():
+    """Redirect root to login page."""
+    return redirect(url_for('auth.login_page'))
+
 @bp.route('/login', methods=['GET'])
 def login_page():
     """Render login page."""
