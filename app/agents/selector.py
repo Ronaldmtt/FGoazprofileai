@@ -1,13 +1,20 @@
 from typing import Dict, Any, List, Optional
 from app.models import Item, Response
+from app.agents.generator import AgentGenerator
 from app import db
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AgentSelector:
     """
     Selects next question to maximize information gain.
-    Uses IRT-lite heuristics and diversification rules.
+    Can use existing items OR generate adaptive questions dynamically.
     """
+    
+    def __init__(self):
+        self.generator = AgentGenerator()
     
     def select_next_item(
         self,
@@ -19,7 +26,7 @@ class AgentSelector:
         Select optimal next item based on:
         - Current proficiency estimates
         - Competency coverage diversity
-        - Item type variation
+        - Dynamic generation when appropriate
         - No repetition
         """
         answered_ids = [r['item_id'] for r in response_history]
@@ -35,6 +42,7 @@ class AgentSelector:
         last_competency = response_history[-1]['competency'] if response_history else None
         last_type = response_history[-1]['type'] if response_history else None
         
+        # Score existing items
         scored_items = []
         for item in available_items:
             score = self._score_item(item, proficiency, last_competency, last_type)
@@ -42,10 +50,128 @@ class AgentSelector:
         
         scored_items.sort(reverse=True, key=lambda x: x[0])
         
+        # Decide: use existing question or generate adaptive one?
+        should_generate = self._should_generate_adaptive(proficiency, response_history)
+        
+        if should_generate and len(response_history) >= 2:
+            # Generate adaptive question for competency needing focus
+            target_comp = self._select_target_competency(proficiency, response_history)
+            difficulty = self._determine_difficulty(proficiency.get(target_comp, {}))
+            
+            logger.info(f"Generating adaptive question for {target_comp} at {difficulty}")
+            
+            generated_data = self.generator.generate_adaptive_question(
+                competency=target_comp,
+                current_score=proficiency.get(target_comp, {}).get('score', 50),
+                difficulty_target=difficulty,
+                response_history=response_history
+            )
+            
+            if generated_data:
+                # Create and save generated item
+                generated_item = Item(
+                    stem=generated_data['stem'],
+                    type=generated_data['type'],
+                    competency=generated_data['competency'],
+                    difficulty_b=generated_data['difficulty_b'],
+                    discrimination_a=generated_data['discrimination_a'],
+                    choices=generated_data.get('choices'),
+                    answer_key=generated_data.get('answer_key'),
+                    rubric=generated_data.get('rubric'),
+                    tags=generated_data.get('tags', ''),
+                    active=True
+                )
+                db.session.add(generated_item)
+                db.session.commit()
+                
+                logger.info(f"Generated adaptive item ID {generated_item.id}")
+                return generated_item
+        
+        # Fallback: select from existing items
         top_k = min(5, len(scored_items))
         selected = random.choice(scored_items[:top_k])[1]
         
         return selected
+    
+    def _should_generate_adaptive(
+        self,
+        proficiency: Dict[str, Any],
+        response_history: List[Dict[str, Any]]
+    ) -> bool:
+        """
+        Decide if we should generate adaptive question vs. use existing.
+        Generate when:
+        - User has answered enough to estimate level (2+ questions)
+        - We have low confidence in some competency
+        - We want personalized challenge
+        """
+        if len(response_history) < 2:
+            return False
+        
+        # 40% chance to generate after first 2 questions
+        # This balances between using curated questions and adaptive ones
+        return random.random() < 0.4
+    
+    def _select_target_competency(
+        self,
+        proficiency: Dict[str, Any],
+        response_history: List[Dict[str, Any]]
+    ) -> str:
+        """
+        Select which competency should receive the next adaptive question.
+        Prioritize:
+        1. Competencies with high uncertainty (wide CI)
+        2. Competencies not recently tested
+        3. Competencies with low item count
+        """
+        recent_competencies = [r['competency'] for r in response_history[-3:]]
+        
+        # Score competencies by priority
+        comp_scores = []
+        for comp, data in proficiency.items():
+            score = 0.0
+            
+            # Prioritize high uncertainty
+            ci_width = data.get('ci_high', 80) - data.get('ci_low', 20)
+            if ci_width > 25:
+                score += 10.0
+            elif ci_width > 15:
+                score += 5.0
+            
+            # Avoid recently tested
+            if comp not in recent_competencies:
+                score += 8.0
+            
+            # Prioritize low coverage
+            items_count = data.get('items_count', 0)
+            if items_count < 2:
+                score += 12.0
+            elif items_count < 4:
+                score += 6.0
+            
+            comp_scores.append((score, comp))
+        
+        if comp_scores:
+            comp_scores.sort(reverse=True)
+            # Pick from top 3
+            top_comps = [c for _, c in comp_scores[:3]]
+            return random.choice(top_comps)
+        
+        # Fallback
+        return list(proficiency.keys())[0] if proficiency else "Fundamentos de IA/ML & LLMs"
+    
+    def _determine_difficulty(self, comp_data: Dict[str, Any]) -> str:
+        """
+        Determine difficulty level for generated question based on user's score.
+        """
+        score = comp_data.get('score', 50)
+        
+        if score < 35:
+            return 'easy'
+        elif score < 65:
+            return 'medium'
+        else:
+            return 'hard'
     
     def _score_item(
         self,
@@ -64,6 +190,7 @@ class AgentSelector:
         comp_score = comp_data.get('score', 50)
         ci_width = comp_data.get('ci_high', 80) - comp_data.get('ci_low', 20)
         
+        # Match difficulty to user level
         difficulty_map = {0: 30, 1: 50, 2: 70}
         item_difficulty_score = difficulty_map.get(int(item.difficulty_b), 50)
         
@@ -73,19 +200,23 @@ class AgentSelector:
         elif score_diff < 35:
             score += 5.0
         
+        # Prioritize high uncertainty
         if ci_width > 25:
             score += 8.0
         elif ci_width > 15:
             score += 4.0
         
+        # Item quality
         score += item.discrimination_a * 10
         
+        # Diversity
         if item.competency != last_competency:
             score += 5.0
         
         if item.type != last_type:
             score += 3.0
         
+        # Coverage
         items_in_competency = comp_data.get('items_count', 0)
         if items_in_competency == 0:
             score += 12.0
