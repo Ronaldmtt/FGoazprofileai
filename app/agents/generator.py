@@ -81,6 +81,11 @@ RETORNE JSON:
 NÃO repita questões genéricas. Seja criativo e contextual."""
 
         try:
+            # Skip if LLM provider is stub
+            if self.llm.provider == 'stub' or not self.llm.client:
+                logger.warning("OpenAI not available, skipping adaptive generation")
+                return None
+            
             response = self.llm.client.chat.completions.create(
                 model="gpt-5",
                 messages=[
@@ -94,7 +99,7 @@ NÃO repita questões genéricas. Seja criativo e contextual."""
                     }
                 ],
                 response_format={"type": "json_object"},
-                max_completion_tokens=600
+                max_tokens=600
             )
             
             question_data = json.loads(response.choices[0].message.content)

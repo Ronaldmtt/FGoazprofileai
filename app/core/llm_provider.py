@@ -78,7 +78,7 @@ class LLMProvider:
             response = self.client.chat.completions.create(
                 model="gpt-5",
                 messages=messages,
-                max_completion_tokens=500
+                max_tokens=500
             )
             
             return response.choices[0].message.content
@@ -121,7 +121,7 @@ Avalie e retorne o JSON."""
                     {"role": "user", "content": user_prompt}
                 ],
                 response_format={"type": "json_object"},
-                max_completion_tokens=400
+                max_tokens=400
             )
             
             result = json.loads(response.choices[0].message.content)
