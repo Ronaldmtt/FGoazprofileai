@@ -22,7 +22,7 @@ def login_page():
 
 @bp.route('/magic-link', methods=['POST'])
 def magic_link():
-    """Generate magic link for email authentication."""
+    """Direct login with email domain validation."""
     try:
         data = request.get_json()
         email = data.get('email', '').strip()
@@ -32,30 +32,53 @@ def magic_link():
                 'error': f'Email deve ser do domínio @{Config.ALLOWED_EMAIL_DOMAIN}'
             }), 400
         
-        token = generate_token(email)
-        magic_url = f"{Config.BASE_URL}/auth/verify?token={token}"
-        
-        logger.info(f"Magic link generated for {email}")
-        logger.info(f"Magic link URL (DEV): {magic_url}")
-        print(f"\n{'='*60}\nMAGIC LINK for {email}:\n{magic_url}\n{'='*60}\n")
-        
+        # Log login attempt
         audit = Audit(
             actor=email,
-            action='magic_link_requested',
+            action='login_attempt',
             target='auth',
             payload={'email': email}
         )
         db.session.add(audit)
         db.session.commit()
         
-        return jsonify({
-            'message': 'Link de acesso enviado! Verifique o console (modo dev).',
-            'dev_link': magic_url if current_app.config.get('FLASK_ENV') == 'development' else None
-        })
+        # Check if user exists
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            # Existing user - login directly
+            flask_session['user_id'] = user.id
+            flask_session['email'] = user.email
+            
+            audit = Audit(
+                actor=email,
+                action='login_success',
+                target='auth',
+                payload={'user_id': user.id}
+            )
+            db.session.add(audit)
+            db.session.commit()
+            
+            logger.info(f"User {email} logged in successfully")
+            
+            return jsonify({
+                'success': True,
+                'redirect': url_for('session.start_page')
+            })
+        else:
+            # New user - needs consent
+            flask_session['pending_email'] = email
+            
+            logger.info(f"New user {email} - redirecting to consent")
+            
+            return jsonify({
+                'success': True,
+                'redirect': url_for('auth.consent')
+            })
     
     except Exception as e:
-        logger.error(f"Error generating magic link: {str(e)}")
-        return jsonify({'error': 'Erro ao gerar link de acesso'}), 500
+        logger.error(f"Error during login: {str(e)}")
+        return jsonify({'error': 'Erro ao fazer login'}), 500
 
 @bp.route('/verify', methods=['GET'])
 def verify():
@@ -97,18 +120,15 @@ def verify():
 @bp.route('/consent', methods=['GET', 'POST'])
 def consent():
     """Handle LGPD consent for new users."""
-    token = request.args.get('token')
-    
-    if not token:
-        return "Token inválido", 400
-    
-    email = verify_token(token, max_age=Config.TOKEN_EXPIRATION_HOURS * 3600)
+    # Get email from session
+    email = flask_session.get('pending_email')
     
     if not email:
-        return "Link expirado", 400
+        return render_template('error.html',
+            message='Sessão inválida. Por favor, faça login novamente.'), 400
     
     if request.method == 'GET':
-        return render_template('consent.html', email=email, token=token)
+        return render_template('consent.html', email=email)
     
     consent = request.form.get('consent') == 'true'
     name = request.form.get('name', '').strip()
@@ -119,6 +139,7 @@ def consent():
         return render_template('error.html',
             message='É necessário aceitar os termos para continuar.')
     
+    # Create new user
     user = User(
         email=email,
         name=name if name else None,
@@ -129,9 +150,12 @@ def consent():
     db.session.add(user)
     db.session.commit()
     
+    # Set user session
     flask_session['user_id'] = user.id
     flask_session['email'] = user.email
+    flask_session.pop('pending_email', None)  # Clear pending email
     
+    # Audit log
     audit = Audit(
         actor=email,
         action='user_created',
@@ -140,6 +164,8 @@ def consent():
     )
     db.session.add(audit)
     db.session.commit()
+    
+    logger.info(f"User {email} created with consent")
     
     return redirect(url_for('session.start_page'))
 

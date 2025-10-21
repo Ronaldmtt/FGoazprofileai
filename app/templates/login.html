@@ -29,20 +29,13 @@
                 <p class="text-sm text-red-800" x-text="error"></p>
             </div>
 
-            <div x-show="success" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p class="text-sm text-green-800" x-text="success"></p>
-                <div x-show="devLink" class="mt-2">
-                    <a :href="devLink" class="text-xs text-blue-600 hover:underline break-all" x-text="'Link: ' + devLink"></a>
-                </div>
-            </div>
-
             <button 
                 type="submit"
                 :disabled="loading"
                 class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
             >
-                <span x-show="!loading">Enviar link de acesso</span>
-                <span x-show="loading">Enviando...</span>
+                <span x-show="!loading">Entrar</span>
+                <span x-show="loading">Entrando...</span>
             </button>
         </form>
     </div>
@@ -54,13 +47,9 @@ function loginForm() {
         email: '',
         loading: false,
         error: '',
-        success: '',
-        devLink: '',
         
         async submitForm() {
             this.error = '';
-            this.success = '';
-            this.devLink = '';
             this.loading = true;
             
             try {
@@ -74,15 +63,15 @@ function loginForm() {
                 
                 const data = await response.json();
                 
-                if (response.ok) {
-                    this.success = data.message;
-                    this.devLink = data.dev_link || '';
+                if (response.ok && data.success) {
+                    // Redirect automatically
+                    window.location.href = data.redirect;
                 } else {
-                    this.error = data.error || 'Erro ao enviar link';
+                    this.error = data.error || 'Erro ao fazer login';
+                    this.loading = false;
                 }
             } catch (err) {
                 this.error = 'Erro de conexão. Tente novamente.';
-            } finally {
                 this.loading = false;
             }
         }
