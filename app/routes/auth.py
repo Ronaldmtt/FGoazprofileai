@@ -80,43 +80,6 @@ def magic_link():
         logger.error(f"Error during login: {str(e)}")
         return jsonify({'error': 'Erro ao fazer login'}), 500
 
-@bp.route('/verify', methods=['GET'])
-def verify():
-    """Verify magic link token and create/login user."""
-    token = request.args.get('token')
-    
-    if not token:
-        return "Token inválido", 400
-    
-    email = verify_token(token, max_age=Config.TOKEN_EXPIRATION_HOURS * 3600)
-    
-    if not email:
-        return render_template('error.html', 
-            message='Link expirado ou inválido. Por favor, solicite um novo.')
-    
-    if not validate_email_domain(email, Config.ALLOWED_EMAIL_DOMAIN):
-        return render_template('error.html',
-            message=f'Email deve ser do domínio @{Config.ALLOWED_EMAIL_DOMAIN}')
-    
-    user = User.query.filter_by(email=email).first()
-    
-    if not user:
-        return redirect(url_for('auth.consent', token=token))
-    
-    flask_session['user_id'] = user.id
-    flask_session['email'] = user.email
-    
-    audit = Audit(
-        actor=email,
-        action='login',
-        target='auth',
-        payload={'user_id': user.id}
-    )
-    db.session.add(audit)
-    db.session.commit()
-    
-    return redirect(url_for('session.start_page'))
-
 @bp.route('/consent', methods=['GET', 'POST'])
 def consent():
     """Handle LGPD consent for new users."""
