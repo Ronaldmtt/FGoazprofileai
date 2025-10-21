@@ -53,12 +53,14 @@ class AgentSelector:
         # Decide: use existing question or generate adaptive one?
         should_generate = self._should_generate_adaptive(proficiency, response_history)
         
+        logger.info(f"[ADAPTIVE] should_generate={should_generate}, history_length={len(response_history)}")
+        
         if should_generate and len(response_history) >= 2:
             # Generate adaptive question for competency needing focus
             target_comp = self._select_target_competency(proficiency, response_history)
             difficulty = self._determine_difficulty(proficiency.get(target_comp, {}))
             
-            logger.info(f"Generating adaptive question for {target_comp} at {difficulty}")
+            logger.info(f"[ADAPTIVE] Generating question for {target_comp} at {difficulty} level")
             
             generated_data = self.generator.generate_adaptive_question(
                 competency=target_comp,
@@ -68,6 +70,7 @@ class AgentSelector:
             )
             
             if generated_data:
+                logger.info(f"[ADAPTIVE] Successfully generated question: {generated_data['stem'][:80]}...")
                 # Create and save generated item
                 generated_item = Item(
                     stem=generated_data['stem'],
@@ -84,8 +87,10 @@ class AgentSelector:
                 db.session.add(generated_item)
                 db.session.commit()
                 
-                logger.info(f"Generated adaptive item ID {generated_item.id}")
+                logger.info(f"[ADAPTIVE] Created item ID {generated_item.id} in database")
                 return generated_item
+            else:
+                logger.warning("[ADAPTIVE] Generation returned None, using existing item")
         
         # Fallback: select from existing items
         top_k = min(5, len(scored_items))

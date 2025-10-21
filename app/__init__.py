@@ -1,6 +1,13 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
+import logging
+
+# Configure logging for debugging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s] %(name)s: %(message)s'
+)
 
 db = SQLAlchemy()
 
