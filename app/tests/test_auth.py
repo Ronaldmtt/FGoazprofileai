@@ -24,14 +24,14 @@ def client(app):
     return app.test_client()
 
 def test_magic_link_valid_domain(client):
-    """Test magic link generation with valid @oaz.co email."""
+    """Test direct login with valid @oaz.co email (new user)."""
     response = client.post('/auth/magic-link', json={
         'email': 'test@oaz.co'
     })
     assert response.status_code == 200
     data = response.get_json()
-    assert 'message' in data
-    assert 'dev_link' in data
+    assert data['success'] == True
+    assert '/auth/consent' in data['redirect']
 
 def test_magic_link_invalid_domain(client):
     """Test magic link rejection for non-@oaz.co email."""
@@ -45,23 +45,21 @@ def test_magic_link_invalid_domain(client):
 
 def test_consent_required(client, app):
     """Test that consent is required for new users."""
-    from app.core.security import generate_token
+    # Simulate login flow
+    with client.session_transaction() as sess:
+        sess['pending_email'] = 'newuser@oaz.co'
     
-    with app.app_context():
-        token = generate_token('newuser@oaz.co')
-    
-    response = client.get(f'/auth/verify?token={token}')
-    assert response.status_code == 302
-    assert '/auth/consent' in response.location
+    response = client.get('/auth/consent')
+    assert response.status_code == 200
+    assert b'Termo de Consentimento' in response.data
 
 def test_user_creation_with_consent(client, app):
     """Test user creation when consent is provided."""
-    from app.core.security import generate_token
+    # Simulate login flow - set pending_email in session
+    with client.session_transaction() as sess:
+        sess['pending_email'] = 'newuser@oaz.co'
     
-    with app.app_context():
-        token = generate_token('newuser@oaz.co')
-    
-    response = client.post(f'/auth/consent?token={token}', data={
+    response = client.post('/auth/consent', data={
         'consent': 'true',
         'name': 'Test User',
         'department': 'Tech',
