@@ -9,7 +9,8 @@ class AgentGrader:
     """
     
     def __init__(self):
-        self.llm = LLMProvider('stub')
+        # Use OpenAI for intelligent grading (falls back to stub if API key missing)
+        self.llm = LLMProvider('openai')
     
     def grade_response(self, item: Item, answer: str) -> Dict[str, Any]:
         """
