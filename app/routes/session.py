@@ -141,7 +141,7 @@ def result():
     global_level = irt.calculate_level(global_score)
     
     return render_template('result.html',
-        session=session,
+        assessment_session=session,
         snapshots=snapshots,
         global_score=global_score,
         global_level=global_level,
