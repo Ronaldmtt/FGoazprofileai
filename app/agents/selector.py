@@ -29,6 +29,15 @@ class AgentSelector:
         - Dynamic generation when appropriate
         - No repetition
         """
+        # Get user info for personalization
+        from app.models import Session
+        session = Session.query.get(session_id)
+        user_context = {
+            'name': session.user.name if session and session.user else 'Usuário',
+            'department': session.user.department if session and session.user else 'Geral',
+            'role': session.user.role if session and session.user else 'Profissional'
+        }
+        
         answered_ids = [r['item_id'] for r in response_history]
         
         available_items = Item.query.filter(
@@ -55,7 +64,7 @@ class AgentSelector:
         
         logger.info(f"[ADAPTIVE] should_generate={should_generate}, history_length={len(response_history)}")
         
-        if should_generate and len(response_history) >= 2:
+        if should_generate:
             # Generate adaptive question for competency needing focus
             target_comp = self._select_target_competency(proficiency, response_history)
             difficulty = self._determine_difficulty(proficiency.get(target_comp, {}))
@@ -66,7 +75,8 @@ class AgentSelector:
                 competency=target_comp,
                 current_score=proficiency.get(target_comp, {}).get('score', 50),
                 difficulty_target=difficulty,
-                response_history=response_history
+                response_history=response_history,
+                user_context=user_context
             )
             
             if generated_data:
@@ -105,17 +115,10 @@ class AgentSelector:
     ) -> bool:
         """
         Decide if we should generate adaptive question vs. use existing.
-        Generate when:
-        - User has answered enough to estimate level (2+ questions)
-        - We have low confidence in some competency
-        - We want personalized challenge
+        NOW: Always generate adaptive questions (100% personalized)
         """
-        if len(response_history) < 2:
-            return False
-        
-        # 40% chance to generate after first 2 questions
-        # This balances between using curated questions and adaptive ones
-        return random.random() < 0.4
+        # ALWAYS generate personalized questions using OpenAI
+        return True
     
     def _select_target_competency(
         self,

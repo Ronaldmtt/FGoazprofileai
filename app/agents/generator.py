@@ -21,7 +21,8 @@ class AgentGenerator:
         competency: str,
         current_score: float,
         difficulty_target: str,
-        response_history: list = None
+        response_history: list = None,
+        user_context: dict = None
     ) -> Dict[str, Any]:
         """
         Generate a personalized question adapted to user's current level.
@@ -31,11 +32,15 @@ class AgentGenerator:
             current_score: User's current proficiency score (0-100)
             difficulty_target: 'easy', 'medium', or 'hard'
             response_history: Previous responses for context
+            user_context: User info (name, department, role) for personalization
             
         Returns:
             Dict with question data ready to be saved as Item
         """
         logger.info(f"Generating adaptive question for {competency} at level {difficulty_target}")
+        
+        if not user_context:
+            user_context = {'name': 'Usuário', 'department': 'Geral', 'role': 'Profissional'}
         
         # Map difficulty to parameters
         difficulty_map = {
@@ -47,10 +52,11 @@ class AgentGenerator:
         diff_params = difficulty_map.get(difficulty_target, difficulty_map['medium'])
         
         # Build context from history
-        context_str = ""
+        context_str = f"\n**Perfil do Usuário**:\n- Nome: {user_context['name']}\n- Área: {user_context['department']}\n- Cargo: {user_context['role']}\n"
+        
         if response_history:
             recent = response_history[-3:]  # Last 3 responses
-            context_str = "\nContexto do usuário:\n"
+            context_str += "\n**Respostas anteriores**:\n"
             for resp in recent:
                 context_str += f"- {resp.get('competency')}: pontuou {resp.get('score', 0):.1f}\n"
         
@@ -58,16 +64,16 @@ class AgentGenerator:
 
 Gere UMA questão de múltipla escolha ({diff_params['description']}) sobre:
 **Competência**: {competency}
-**Nível do usuário**: {current_score:.0f}/100
+**Nível atual**: {current_score:.0f}/100
 **Dificuldade alvo**: {diff_params['description']}
 {context_str}
 
 REQUISITOS DA QUESTÃO:
-1. Relevante para profissionais usando IA no trabalho
-2. Baseada em cenários reais e práticos
-3. Teste conhecimento aplicado, não decoreba
-4. 4 alternativas plausíveis (A, B, C, D)
-5. Uma resposta claramente correta
+1. **PERSONALIZE para o cargo/área do usuário** - use contexto real dele
+2. Baseada em cenários práticos do dia a dia do trabalho
+3. Teste conhecimento aplicado, não decoreba teórica
+4. 4 alternativas plausíveis e realistas (A, B, C, D)
+5. Uma resposta claramente correta com justificativa
 
 RETORNE JSON:
 {{
@@ -83,8 +89,10 @@ NÃO repita questões genéricas. Seja criativo e contextual."""
         try:
             # Skip if LLM provider is stub
             if self.llm.provider == 'stub' or not self.llm.client:
-                logger.warning("OpenAI not available, skipping adaptive generation")
+                logger.warning("[ADAPTIVE] OpenAI not available, skipping generation")
                 return None
+            
+            logger.info(f"[ADAPTIVE] Calling OpenAI for user {user_context['name']} ({user_context['role']} - {user_context['department']})")
             
             response = self.llm.client.chat.completions.create(
                 model="gpt-5",
