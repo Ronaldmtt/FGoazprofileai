@@ -45,7 +45,7 @@ def magic_link():
         
         return jsonify({
             'message': 'Link de acesso enviado! Verifique o console (modo dev).',
-            'dev_link': magic_url if Config.FLASK_ENV == 'development' else None
+            'dev_link': magic_url if current_app.config.get('FLASK_ENV') == 'development' else None
         })
     
     except Exception as e:
