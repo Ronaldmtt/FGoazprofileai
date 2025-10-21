@@ -1,0 +1,321 @@
+Você é um agente desenvolvedor autônomo no Replit (Agent 3). Construa, de ponta a ponta, uma aplicação web em Flask chamada OAZ IA Profiler para diagnosticar o nível de proficiência em IA de colaboradores. Faça scaffold completo, testes automatizados, documentação e deploy no Replit.
+
+0) Regras gerais de execução
+
+Trabalhe em pequenas iterações com ciclos de auto-teste: gere código → rode os testes → corrija até passar.
+
+Não apague arquivos gerados sem confirmação em comentários do próprio agente. Sempre crie checkpoints/commits.
+
+Tudo deve rodar localmente com SQLite no Replit; isole chaves/segredos em .env.
+
+Entregue README.md com passos de setup/execução/testes/deploy e CHANGELOG.md com as iterações.
+
+Gere Dockerfile e replit.nix (ou .replit) para garantir que o projeto rode no ambiente Replit.
+
+1) Objetivo do produto
+
+Mensurar o nível de proficiência em IA de cada colaborador da OAZ em 8–12 minutos, com avaliação adaptativa e um ecossistema de agentes (internos ao app) que:
+
+geram a próxima pergunta,
+
+corrigem respostas (objetivas e discursivas),
+
+atualizam o score por competência,
+
+decidem critério de parada e
+
+geram recomendações de trilha.
+
+2) Competências e níveis
+
+Implemente um framework com 9 competências (cada uma 0–100) e nível global N0–N5:
+
+Fundamentos de IA/ML & LLMs
+
+Ferramentas de IA no dia a dia
+
+Prompt Engineering & Orquestração
+
+Dados & Contextualização (RAG)
+
+Automação de Processos com IA
+
+Ética, Segurança & Compliance
+
+Produto e Negócio com IA
+
+Code/No-code para IA
+
+LLMOps & Qualidade
+
+Níveis globais: N0(<30), N1(30–44), N2(45–59), N3(60–74), N4(75–89), N5(≥90).
+
+3) Fluxos
+3.1 Usuário (colaborador OAZ)
+
+Acessa link → validação de e-mail @oaz.co e consentimento LGPD.
+
+Recebe Pergunta Inicial (P0) (aberta, curta).
+
+Avaliação adaptativa (8–15 itens): perguntas variam por resposta e proficiência.
+
+Final: mensagem de obrigado + feedback curto + sugestão de trilha (opcional).
+
+3.2 Admin (RH/inovAI.lab)
+
+Dashboard com distribuição de níveis, heatmap por competência/área, participação, confiança.
+
+Drill-down por departamento/cargo.
+
+CRUD do banco de itens (perguntas) + tags e estimativas de dificuldade/discriminação.
+
+Exportação CSV/XLSX.
+
+4) Arquitetura & tech stack
+
+Backend: Flask + SQLAlchemy + Pydantic (schemas) + Celery (tarefas assíncronas) + Redis (fila).
+
+DB: SQLite (dev) com possibilidade de Postgres (variáveis).
+
+Busca semântica de itens (futuro): preparar camada para pgvector; no MVP, use seleção heurística.
+
+Frontend: Jinja2 + HTMX/AlpineJS (leve) + Tailwind CSS.
+
+Autenticação: magic link por e-mail (sendgrid/fake console no dev) + verificação de domínio @oaz.co.
+
+Env: .env para secrets (APP_SECRET, SENDGRID_API_KEY, etc.).
+
+Testes: Pytest + cobertura, incluindo testes de rotas, scoring e agentes.
+
+Observabilidade: logs estruturados + simples métricas (tempo por item, latência de correção).
+
+5) Modelo de dados (ORM)
+
+Tabelas mínimas:
+
+users(id, name, email, department, role, consent_ts, created_at)
+
+sessions(id, user_id, started_at, ended_at, status, time_spent_s)
+
+items(id, stem, type, competency, difficulty_b, discrimination_a, choices_json, answer_key, rubric_json, tags, active)
+
+responses(id, session_id, item_id, raw_answer, graded_score_0_1, rubric_breakdown_json, latency_ms, ai_flags_json)
+
+proficiency_snapshots(id, session_id, competency, score_0_100, ci_low, ci_high)
+
+recommendations(id, user_id, session_id, tracks_json)
+
+audits(id, actor, action, target, payload_json, ts)
+
+Inclua migrations (Alembic).
+
+6) Ecossistema de agentes internos (no app)
+
+Implemente módulos Python (sem expor chaves) que possam ser trocados por provedores LLM:
+
+AgentOrchestrator: mantém estado da sessão, chama os demais.
+
+AgentProfiler: interpreta P0 e inicializa vetor de proficiências (prior = 50/100, alta variância).
+
+AgentSelector: escolhe próxima pergunta maximizando informação (heurística IRT-lite). Regras:
+
+Diversificar tipos (MCQ, cenário/prática, prompt writing).
+
+Evitar repetir a mesma competência consecutivamente.
+
+Respeitar tempo total alvo (8–12 min).
+
+AgentGenerator: permite variações de enunciado/distratores; valida linguagem clara.
+
+AgentGrader: corrige MCQ (gabarito) e discursiva/prompt por rubricas (relevância, precisão, segurança, completude, objetividade). Retorno: score_0_1, breakdown e flags (risco, viés, vazamento).
+
+AgentScorer: atualiza as 9 competências com heurística IRT-lite:
+
+Correta em item difícil ↑↑; incorreta em item fácil ↓↓; etc.
+
+Mantém intervalo de confiança (IC).
+
+Calcula nível global ao final.
+
+AgentRecommender: gera trilhas por gaps (ex.: “Fundamentos N1–N2”).
+
+AgentContentQA (admin): valida novos itens.
+
+6.1 Abstração de LLM
+
+Crie llm_provider.py com interface generate(), score(), moderate().
+
+MVP: stub que simula resultados determinísticos (sem chamadas externas).
+
+Incluir ponto de extensão para OpenAI/Azure (desabilitado por padrão).
+
+7) Endpoints (REST)
+
+POST /auth/magic-link — gera link; no dev, loga token no console.
+
+GET /auth/verify?token=... — valida token e domínio @oaz.co.
+
+POST /session/start — inicia sessão.
+
+GET /items/next — retorna próximo item (AgentSelector).
+
+POST /responses — recebe resposta, corrige (AgentGrader), atualiza score (AgentScorer) e retorna estado (progresso, tempo restante, preview do próximo tipo).
+
+POST /session/finish — encerra, grava snapshot e recomendações (AgentRecommender).
+
+GET /me/result — resumo final para o usuário (texto curto).
+
+Admin
+
+GET /admin/overview — métricas gerais.
+
+GET /admin/heatmap?group_by=department
+
+GET /admin/users/:id — detalhe do colaborador.
+
+POST /admin/items / PUT /admin/items/:id / DELETE /admin/items/:id — CRUD com validação AgentContentQA.
+
+GET /admin/export.csv e GET /admin/export.xlsx.
+
+8) UX e conteúdo
+
+Landing com e-mail + consentimento (LGPD).
+
+Barra de progresso, opção pular (reduz confiança).
+
+Tipos de item no MVP:
+
+MCQ (1 correta + 3 distratores plausíveis).
+
+Cenário prático (múltipla escolha).
+
+Prompt Writing curto (discursiva curta).
+
+Pergunta inicial (P0): “Em 1 frase, para que você mais usaria um assistente de IA no seu dia a dia atual?”
+
+Textos claros e acolhedores; tom não-punitivo.
+
+9) Segurança, LGPD e antifraude
+
+Guardar consentimento; informar finalidade e retenção mínima.
+
+Não enviar PII a provedores externos (stub LLM no MVP).
+
+Telemetria de latência e detecção de paste massivo.
+
+Aleatorização de ordem de itens e variações.
+
+Logs de alto nível em audits, sem armazenar raciocínio do LLM.
+
+10) Banco de itens (seed)
+
+Crie seed com 36 itens (4 por competência), marcando: type, competency, difficulty_b (0=fácil, 1=médio, 2=difícil), discrimination_a (0–1), answer_key/rubric_json, tags.
+Inclua 3 cenários de Ética/Segurança e 3 prompts de Prompt Engineering.
+
+11) Critérios de parada
+
+Máx. 12 itens, mín. 8.
+
+Ou convergência: IC médio ≤ 12 pts em ≥ 6 competências.
+
+Ou tempo total ≥ 12 min.
+
+12) Critérios de aceitação (auto-testagem do Agent)
+
+Implemente testes Pytest que verifiquem:
+
+Auth: emails fora de @oaz.co são rejeitados.
+
+Fluxo: start → next → responses → next ... → finish funciona e persiste dados.
+
+Scoring: respostas simuladas aumentam/diminuem proficiências conforme dificuldade.
+
+Parada: sessão termina por convergência ou limite.
+
+Admin: endpoints retornam métricas e exportações válidas.
+
+Seed: existem ≥ 36 itens ativos, com metadados completos.
+
+LGPD: consentimento é obrigatório para iniciar.
+
+13) Estrutura esperada de pastas
+/app
+  /agents
+    orchestrator.py
+    profiler.py
+    selector.py
+    generator.py
+    grader.py
+    scorer.py
+    recommender.py
+    content_qa.py
+  /core
+    llm_provider.py
+    scoring.py
+    schemas.py
+    security.py
+    utils.py
+  /models
+    __init__.py
+    user.py
+    session.py
+    item.py
+    response.py
+    snapshot.py
+    recommendation.py
+    audit.py
+  /routes
+    auth.py
+    session.py
+    items.py
+    responses.py
+    admin.py
+  /services
+    emailer.py
+    exporter.py
+  /templates
+    *.html
+  /static
+    css/, js/
+  /tests
+    test_auth.py
+    test_flow.py
+    test_scoring.py
+    test_admin.py
+alembic/, alembic.ini
+config.py
+app.py
+requirements.txt
+README.md
+CHANGELOG.md
+Dockerfile
+.replit (ou replit.nix)
+.env.example
+
+14) Dependências (requirements.txt)
+
+Flask, SQLAlchemy, Alembic, Pydantic, python-dotenv
+
+Celery, Redis, openpyxl, pandas (para export), pytest, pytest-cov
+
+email-validator, passlib (se necessário), HTMX/Alpine via CDN no template
+
+15) Deploy no Replit
+
+Script run que inicia Flask + worker Celery (se aplicável no Replit).
+
+Instruções no README para Deploy botão-único do Replit.
+
+Seeds rodados automaticamente na primeira execução (flag SEED_ON_START=1).
+
+16) Entregáveis finais
+
+App executando no Replit com cobertura de testes ≥ 80%.
+
+README com screenshots do dashboard.
+
+Exportações CSV/XLSX funcionais.
+
+1 arquivo prompts/ com exemplos de rubricas e variações de itens.
+
+Agora construa a aplicação completa seguindo estas instruções. Quando terminar, rode todos os testes; se algo falhar, corrija e repita até passar. Em seguida, gere o README final e o link de execução.
