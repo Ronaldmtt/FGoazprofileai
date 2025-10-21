@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - OAZ IA Profiler{% endblock %}
+
+{% block content %}
+<div x-data="adminDashboard()" x-init="loadData()">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Administrativo</h2>
+        <p class="text-gray-600">Visão geral das avaliações e proficiências</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600 mb-1">Total de Usuários</p>
+            <p class="text-3xl font-bold text-gray-900" x-text="overview.total_users || '0'"></p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600 mb-1">Avaliações Concluídas</p>
+            <p class="text-3xl font-bold text-green-600" x-text="overview.completed_sessions || '0'"></p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600 mb-1">Taxa de Participação</p>
+            <p class="text-3xl font-bold text-blue-600" x-text="(overview.participation_rate || 0) + '%'"></p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600 mb-1">Em Andamento</p>
+            <p class="text-3xl font-bold text-orange-600" x-text="overview.active_sessions || '0'"></p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Distribuição de Níveis</h3>
+            <div class="space-y-3">
+                <template x-for="(count, level) in overview.level_distribution" :key="level">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700" x-text="level"></span>
+                            <span class="text-sm text-gray-600" x-text="count"></span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" :style="'width: ' + (count / overview.completed_sessions * 100) + '%'"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Heatmap de Competências</h3>
+            <div class="space-y-3">
+                <template x-for="(data, comp) in heatmap" :key="comp">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-xs font-medium text-gray-700" x-text="comp.substring(0, 30) + '...'"></span>
+                            <span class="text-xs text-gray-600" x-text="data.avg_score"></span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" :style="'width: ' + data.avg_score + '%'"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Exportar Dados</h3>
+            <div class="space-x-2">
+                <a href="/admin/export.csv" class="inline-block bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition text-sm">
+                    Download CSV
+                </a>
+                <a href="/admin/export.xlsx" class="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm">
+                    Download Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function adminDashboard() {
+    return {
+        overview: {},
+        heatmap: {},
+        
+        async loadData() {
+            try {
+                const overviewRes = await fetch('/admin/overview');
+                this.overview = await overviewRes.json();
+                
+                const heatmapRes = await fetch('/admin/heatmap');
+                this.heatmap = await heatmapRes.json();
+            } catch (err) {
+                console.error('Error loading data:', err);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Login - OAZ IA Profiler{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto" x-data="loginForm()">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Bem-vindo!</h2>
+        <p class="text-gray-600 mb-6">
+            Avalie sua proficiência em IA em 8-12 minutos
+        </p>
+
+        <form @submit.prevent="submitForm">
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email corporativo (@oaz.co)
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    x-model="email"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="seu.nome@oaz.co"
+                >
+            </div>
+
+            <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-800" x-text="error"></p>
+            </div>
+
+            <div x-show="success" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-sm text-green-800" x-text="success"></p>
+                <div x-show="devLink" class="mt-2">
+                    <a :href="devLink" class="text-xs text-blue-600 hover:underline break-all" x-text="'Link: ' + devLink"></a>
+                </div>
+            </div>
+
+            <button 
+                type="submit"
+                :disabled="loading"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+            >
+                <span x-show="!loading">Enviar link de acesso</span>
+                <span x-show="loading">Enviando...</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function loginForm() {
+    return {
+        email: '',
+        loading: false,
+        error: '',
+        success: '',
+        devLink: '',
+        
+        async submitForm() {
+            this.error = '';
+            this.success = '';
+            this.devLink = '';
+            this.loading = true;
+            
+            try {
+                const response = await fetch('/auth/magic-link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: this.email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    this.success = data.message;
+                    this.devLink = data.dev_link || '';
+                } else {
+                    this.error = data.error || 'Erro ao enviar link';
+                }
+            } catch (err) {
+                this.error = 'Erro de conexão. Tente novamente.';
+            } finally {
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Seu Resultado - OAZ IA Profiler{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-8 mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Parabéns!</h2>
+        <p class="text-gray-600 mb-6">
+            Você concluiu a avaliação de proficiência em IA.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-blue-50 rounded-lg p-6 text-center">
+                <p class="text-sm text-gray-600 mb-2">Nível Global</p>
+                <p class="text-4xl font-bold text-blue-600">{{ global_level }}</p>
+            </div>
+            
+            <div class="bg-green-50 rounded-lg p-6 text-center">
+                <p class="text-sm text-gray-600 mb-2">Score Global</p>
+                <p class="text-4xl font-bold text-green-600">{{ "%.1f"|format(global_score) }}</p>
+            </div>
+            
+            <div class="bg-purple-50 rounded-lg p-6 text-center">
+                <p class="text-sm text-gray-600 mb-2">Tempo Gasto</p>
+                <p class="text-4xl font-bold text-purple-600">{{ (session.time_spent_s // 60) }}min</p>
+            </div>
+        </div>
+
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">Proficiência por Competência</h3>
+        
+        <div class="space-y-4 mb-8">
+            {% for snapshot in snapshots %}
+            <div>
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-700">{{ snapshot.competency }}</span>
+                    <span class="text-sm text-gray-600">{{ "%.1f"|format(snapshot.score_0_100) }} - {{ irt.calculate_level(snapshot.score_0_100) }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ snapshot.score_0_100 }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if recommendation and recommendation.tracks %}
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">Trilhas de Aprendizado Recomendadas</h3>
+        
+        <div class="space-y-4">
+            {% for track in recommendation.tracks %}
+            <div class="border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-start mb-3">
+                    <h4 class="font-semibold text-gray-900">{{ track.title }}</h4>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                        {{ track.current_level }} → {{ track.target_level }}
+                    </span>
+                </div>
+                <ul class="list-disc ml-6 text-sm text-gray-700 space-y-1">
+                    {% for resource in track.resources %}
+                    <li>{{ resource }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-600 mb-4">
+                Seus resultados foram salvos e podem ser acessados pelo RH e inovAI.lab.
+            </p>
+            <a href="/session/start" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                ← Voltar ao início
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

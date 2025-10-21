@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Consentimento LGPD - OAZ IA Profiler{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Termo de Consentimento (LGPD)</h2>
+        
+        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-gray-700">
+                <strong>Email:</strong> {{ email }}
+            </p>
+        </div>
+
+        <div class="mb-6 text-sm text-gray-700 space-y-3">
+            <p>
+                Ao utilizar esta ferramenta de avaliação de proficiência em IA, você concorda com o seguinte:
+            </p>
+            <ul class="list-disc ml-6 space-y-2">
+                <li>Seus dados serão utilizados exclusivamente para mensurar seu nível de conhecimento em IA.</li>
+                <li>As informações coletadas incluem: email, nome, departamento, cargo e respostas às questões.</li>
+                <li>Os dados serão armazenados de forma segura e acessados apenas por RH e inovAI.lab para fins de treinamento e desenvolvimento.</li>
+                <li>Você pode solicitar acesso, correção ou exclusão dos seus dados a qualquer momento.</li>
+                <li>Não compartilharemos seus dados com terceiros sem seu consentimento explícito.</li>
+                <li>A avaliação é voluntária e você pode interromper a qualquer momento.</li>
+            </ul>
+        </div>
+
+        <form method="POST" action="/auth/consent?token={{ token }}">
+            <div class="mb-6 space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nome (opcional)
+                    </label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        placeholder="Seu nome completo"
+                    >
+                </div>
+
+                <div>
+                    <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
+                        Departamento (opcional)
+                    </label>
+                    <input 
+                        type="text" 
+                        id="department" 
+                        name="department"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        placeholder="Ex: Tecnologia, Marketing, Vendas"
+                    >
+                </div>
+
+                <div>
+                    <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
+                        Cargo (opcional)
+                    </label>
+                    <input 
+                        type="text" 
+                        id="role" 
+                        name="role"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        placeholder="Ex: Desenvolvedor, Analista, Gerente"
+                    >
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="flex items-start space-x-3">
+                    <input 
+                        type="checkbox" 
+                        name="consent" 
+                        value="true" 
+                        required
+                        class="mt-1"
+                    >
+                    <span class="text-sm text-gray-700">
+                        Eu li e concordo com os termos de uso e consentimento de dados acima.
+                    </span>
+                </label>
+            </div>
+
+            <button 
+                type="submit"
+                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition font-medium"
+            >
+                Aceitar e Continuar
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

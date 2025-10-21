@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Avaliação - OAZ IA Profiler{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto" x-data="startForm()">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Avaliação de Proficiência em IA</h2>
+        
+        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-gray-700">
+                <strong>Olá, {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %}!</strong>
+            </p>
+            <p class="text-sm text-gray-600 mt-2">
+                Esta avaliação leva de 8 a 12 minutos e medirá sua proficiência em 9 competências de IA.
+            </p>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="font-semibold text-gray-900 mb-3">Pergunta Inicial (P0)</h3>
+            <p class="text-sm text-gray-700 mb-4">
+                Em 1 frase, para que você mais usaria um assistente de IA no seu dia a dia atual?
+            </p>
+            
+            <textarea 
+                x-model="initialResponse"
+                rows="4"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Descreva brevemente como você usaria IA no seu trabalho..."
+            ></textarea>
+        </div>
+
+        <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm text-red-800" x-text="error"></p>
+        </div>
+
+        <button 
+            @click="startSession"
+            :disabled="loading || !initialResponse || initialResponse.length < 5"
+            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+        >
+            <span x-show="!loading">Iniciar Avaliação</span>
+            <span x-show="loading">Iniciando...</span>
+        </button>
+    </div>
+</div>
+
+<script>
+function startForm() {
+    return {
+        initialResponse: '',
+        loading: false,
+        error: '',
+        
+        async startSession() {
+            this.error = '';
+            this.loading = true;
+            
+            try {
+                const response = await fetch('/session/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        initial_response: this.initialResponse 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = data.redirect;
+                } else {
+                    this.error = data.error || 'Erro ao iniciar sessão';
+                }
+            } catch (err) {
+                this.error = 'Erro de conexão. Tente novamente.';
+            } finally {
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

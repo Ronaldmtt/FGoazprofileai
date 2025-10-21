@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Finalizar Avaliação - OAZ IA Profiler{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto" x-data="finishForm()">
+    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+        <div class="mb-6">
+            <svg class="mx-auto h-16 w-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Você chegou ao fim da avaliação!</h2>
+        
+        <p class="text-gray-600 mb-8">
+            Estamos processando suas respostas e calculando seu perfil de proficiência em IA.
+        </p>
+
+        <button 
+            @click="finishSession"
+            :disabled="loading"
+            class="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+        >
+            <span x-show="!loading">Ver Meu Resultado</span>
+            <span x-show="loading">Finalizando...</span>
+        </button>
+    </div>
+</div>
+
+<script>
+function finishForm() {
+    return {
+        loading: false,
+        
+        async finishSession() {
+            this.loading = true;
+            
+            try {
+                const response = await fetch('/session/finish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert('Erro ao finalizar sessão');
+                    this.loading = false;
+                }
+            } catch (err) {
+                alert('Erro de conexão');
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
