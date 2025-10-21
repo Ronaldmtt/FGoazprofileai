@@ -7,9 +7,9 @@ A aplicação está rodando em: **http://localhost:5000**
 
 ### 2. Faça login
 1. Digite um email do domínio **@oaz.co** (ex: `seu.nome@oaz.co`)
-2. Clique em "Enviar link de acesso"
-3. **No modo dev**: O link mágico aparece no console. Copie e cole no navegador.
-4. **No modo produção**: Você receberá o link por email.
+2. Clique em "Entrar"
+3. **Pronto!** O sistema valida seu domínio e faz login automaticamente
+4. Se for novo usuário, você será redirecionado para aceitar os termos LGPD
 
 ### 3. Aceite os Termos LGPD
 - Leia e aceite o consentimento de uso de dados
@@ -156,8 +156,8 @@ pip install -r requirements.txt
 ### Banco de dados vazio
 **Solução**: Certifique-se que `SEED_ON_START=1` e reinicie a aplicação
 
-### Magic link não funciona
-**Solução**: No modo dev, copie o link do console. Em produção, configure `SENDGRID_API_KEY`
+### Login não funciona
+**Solução**: Verifique se o email é do domínio @oaz.co. O sistema valida automaticamente e faz login direto.
 
 ---
 

@@ -132,9 +132,11 @@ A aplicação estará disponível em `http://localhost:5000`
 
 1. Acesse `http://localhost:5000`
 2. Digite um email `@oaz.co`
-3. O link mágico será exibido no console (modo dev)
-4. Clique no link e aceite os termos LGPD
+3. Clique em "Entrar"
+4. Se for novo usuário: aceite os termos LGPD
 5. Inicie sua avaliação!
+
+**Novo fluxo simplificado**: Não precisa mais clicar em links! O login acontece automaticamente após validação do domínio de email.
 
 ## 🧪 Testes
 
