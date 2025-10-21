@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, session as flask_session
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, session as flask_session, current_app
 from app.core.security import generate_token, verify_token, validate_email_domain
 from app.core.schemas import MagicLinkRequest
 from app.models import User, Audit
