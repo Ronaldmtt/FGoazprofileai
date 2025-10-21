@@ -37,7 +37,10 @@ def next_page():
     next_item = orchestrator.get_next_item()
     
     if not next_item:
-        return redirect(url_for('session.finish_page'))
+        # If OpenAI generation failed, show error
+        return render_template('error.html',
+            message="Não foi possível gerar a próxima pergunta personalizada. Verifique se a chave da OpenAI está configurada corretamente."
+        )
     
     progress = {
         'current': orchestrator.state['items_answered'] + 1,
@@ -73,10 +76,9 @@ def next_api():
     
     if not next_item:
         return jsonify({
-            'should_stop': True,
-            'reason': 'no_items',
-            'redirect': url_for('session.finish_page')
-        })
+            'error': True,
+            'message': 'Falha na geração de pergunta personalizada pela OpenAI. Verifique a configuração da API key.'
+        }), 500
     
     return jsonify({
         'item_id': next_item.id,

@@ -100,13 +100,9 @@ class AgentSelector:
                 logger.info(f"[ADAPTIVE] Created item ID {generated_item.id} in database")
                 return generated_item
             else:
-                logger.warning("[ADAPTIVE] Generation returned None, using existing item")
-        
-        # Fallback: select from existing items
-        top_k = min(5, len(scored_items))
-        selected = random.choice(scored_items[:top_k])[1]
-        
-        return selected
+                # NO FALLBACK - if generation fails, return None to indicate error
+                logger.error("[ADAPTIVE] Generation FAILED - OpenAI did not generate question")
+                return None
     
     def _should_generate_adaptive(
         self,

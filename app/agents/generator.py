@@ -107,7 +107,7 @@ NÃO repita questões genéricas. Seja criativo e contextual."""
                     }
                 ],
                 response_format={"type": "json_object"},
-                max_tokens=600
+                max_completion_tokens=600
             )
             
             question_data = json.loads(response.choices[0].message.content)
@@ -131,8 +131,8 @@ NÃO repita questões genéricas. Seja criativo e contextual."""
             }
             
         except Exception as e:
-            logger.error(f"Error generating adaptive question: {e}")
-            # Fallback to fetching from database
+            logger.error(f"[ADAPTIVE] ERROR generating question: {e}")
+            # Return None - NO fallback to generic questions
             return None
     
     def generate_variation(self, original_item: Dict[str, Any]) -> Dict[str, Any]:
