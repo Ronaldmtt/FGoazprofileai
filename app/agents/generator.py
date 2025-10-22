@@ -43,10 +43,11 @@ class AgentGenerator:
             user_context = {'name': 'Usuário', 'department': 'Geral', 'role': 'Profissional'}
         
         # Map difficulty to IRT parameters (theta scale: -3 to +3)
+        # Higher discrimination (a) for better separation between correct/incorrect
         difficulty_map = {
-            'easy': {'b': -1.0, 'a': 1.2, 'description': 'básico/introdutório'},
-            'medium': {'b': 0.0, 'a': 1.5, 'description': 'intermediário/prático'},
-            'hard': {'b': 1.5, 'a': 1.8, 'description': 'avançado/especialista'}
+            'easy': {'b': -1.0, 'a': 1.5, 'description': 'básico/introdutório'},
+            'medium': {'b': 0.0, 'a': 1.8, 'description': 'intermediário/prático'},
+            'hard': {'b': 1.5, 'a': 2.2, 'description': 'avançado/especialista'}
         }
         
         diff_params = difficulty_map.get(difficulty_target, difficulty_map['medium'])

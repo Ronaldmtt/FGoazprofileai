@@ -54,8 +54,12 @@ class IRTScorer:
         # If scored worse than expected → decrease theta
         performance_gap = response_score - expected_prob
         
+        # Ensure discrimination is in a meaningful range (prevent too-small updates)
+        effective_discrimination = max(1.0, min(2.5, item_discrimination))
+        
         # Learning rate scales with discrimination (more informative items = bigger updates)
-        learning_rate = 0.3 * item_discrimination
+        # Increased from 0.3 to 1.0 for better separation between correct/incorrect
+        learning_rate = 1.0 * effective_discrimination
         theta_update = learning_rate * performance_gap
         
         new_theta = theta + theta_update
@@ -73,19 +77,22 @@ class IRTScorer:
     
     @staticmethod
     def calculate_level(score: float) -> str:
-        """Calculate proficiency level (N0-N5) based on score."""
-        if score < 30:
-            return 'N0'
-        elif score < 45:
-            return 'N1'
+        """
+        Calculate proficiency level (N0-N5) based on score.
+        Adjusted thresholds for better separation with improved scoring algorithm.
+        """
+        if score < 20:
+            return 'N0'  # Iniciante - errou quase tudo
+        elif score < 40:
+            return 'N1'  # Básico - performance fraca
         elif score < 60:
-            return 'N2'
+            return 'N2'  # Intermediário - média
         elif score < 75:
-            return 'N3'
-        elif score < 90:
-            return 'N4'
+            return 'N3'  # Avançado - boa performance
+        elif score < 88:
+            return 'N4'  # Especialista - muito boa
         else:
-            return 'N5'
+            return 'N5'  # Mestre - quase perfeito
     
     @staticmethod
     def calculate_global_score(competency_scores: Dict[str, float]) -> float:

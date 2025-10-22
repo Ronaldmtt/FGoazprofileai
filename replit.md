@@ -6,7 +6,7 @@ OAZ IA Profiler is an adaptive AI proficiency assessment platform that evaluates
 
 The application features a multi-agent ecosystem where specialized agents handle question selection, response grading, proficiency scoring, and recommendation generation. Assessment sessions adapt in real-time, converging on accurate proficiency estimates while minimizing test duration.
 
-**Status**: ✅ Production ready (v1.3.0) - Perguntas práticas e diretas para todos os níveis, de iniciantes a especialistas
+**Status**: ✅ Production ready (v1.4.0) - Sistema de pontuação corrigido com separação precisa entre níveis
 
 ## User Preferences
 
@@ -44,10 +44,12 @@ Each agent maintains separation of concerns while the orchestrator coordinates s
 ### Adaptive Assessment Algorithm (IRT with Theta Scale)
 - **Proficiency tracking** per competency (0-100 scale displayed, theta -3 to +3 internally) with confidence intervals
 - **Dynamic difficulty adjustment** using proper IRT logistic model: P(correct) = 1/(1 + exp(-a*(theta - b)))
-- Item parameters on theta scale: difficulty_b (-1.0 to +1.5) and discrimination_a (1.2 to 1.8)
+- **Enhanced discrimination**: Item discrimination clamped to minimum 1.0, ensuring strong separation between correct/incorrect
+- **Optimized learning rate**: 1.0 multiplier (up from 0.3) for rapid convergence and clear differentiation
+- Item parameters: difficulty_b (-1.0 to +1.5), discrimination_a (1.5 to 2.2)
 - **Adaptive difficulty routing**: easy (score <40), medium (40-70), hard (>70)
 - **Convergence criteria**: minimum 8 items, maximum 12 items, CI ≤ 12 points on 6+ competencies, or 12-minute timeout
-- Bayesian-inspired theta updates that accurately reflect performance (no score plateau at ~55)
+- **Clear level separation**: N0 (<20), N1 (20-39), N2 (40-59), N3 (60-74), N4 (75-87), N5 (88+)
 
 ### Data Models
 Database schema implemented with SQLAlchemy models:
