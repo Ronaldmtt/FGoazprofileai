@@ -1,0 +1,29 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+[INFO] werkzeug: WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.101.226:5000
+[INFO] werkzeug: Press CTRL+C to quit
+[INFO] werkzeug:  * Restarting with stat
+[WARNING] werkzeug:  * Debugger is active!
+[INFO] werkzeug:  * Debugger PIN: 147-050-851
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:24:46] "GET / HTTP/1.1" 302 -
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:24:46] "GET /auth/login HTTP/1.1" 200 -
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:30:42] "GET / HTTP/1.1" 302 -
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:30:42] "GET /auth/login HTTP/1.1" 200 -
+[INFO] app.routes.auth: New user giu@oaz.co - redirecting to consent
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:30:53] "POST /auth/magic-link HTTP/1.1" 200 -
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:30:54] "GET /auth/consent HTTP/1.1" 200 -
+[INFO] app.routes.auth: User giu@oaz.co created with consent
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:31:06] "POST /auth/consent HTTP/1.1" 302 -
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:31:06] "GET /session/start HTTP/1.1" 200 -
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:31:22] "POST /session/start HTTP/1.1" 200 -
+[INFO] app.agents.selector: [ADAPTIVE] should_generate=True, history_length=0
+[INFO] app.agents.selector: [ADAPTIVE] Generating question for Produto e Negócio com IA at medium level
+[INFO] app.agents.generator: Generating adaptive question for Produto e Negócio com IA at level medium
+[INFO] app.agents.generator: [ADAPTIVE] Calling OpenAI for user Giuliana (Gerente - Marketing)
+[INFO] httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[ERROR] app.agents.generator: [ADAPTIVE] ERROR generating question: Expecting value: line 1 column 1 (char 0)
+[ERROR] app.agents.selector: [ADAPTIVE] Generation FAILED - OpenAI did not generate question
+[INFO] werkzeug: 172.31.101.226 - - [22/Oct/2025 00:31:34] "GET /items/next HTTP/1.1" 200 -

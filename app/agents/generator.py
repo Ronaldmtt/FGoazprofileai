@@ -110,7 +110,15 @@ NÃO repita questões genéricas. Seja criativo e contextual."""
                 max_completion_tokens=600
             )
             
-            question_data = json.loads(response.choices[0].message.content)
+            # Log response for debugging
+            raw_content = response.choices[0].message.content
+            logger.info(f"[ADAPTIVE] OpenAI raw response (first 200 chars): {raw_content[:200] if raw_content else 'EMPTY/NONE'}")
+            
+            if not raw_content:
+                logger.error("[ADAPTIVE] OpenAI returned empty content!")
+                return None
+            
+            question_data = json.loads(raw_content)
             
             # Build complete item data
             return {
