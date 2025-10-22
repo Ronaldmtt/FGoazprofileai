@@ -60,7 +60,7 @@ class AgentGenerator:
             for resp in recent:
                 context_str += f"- {resp.get('competency')}: pontuou {resp.get('score', 0):.1f}\n"
         
-        prompt = f"""Você é um especialista em avaliação de proficiência em IA.
+        prompt = f"""Você é um especialista em avaliação TÉCNICA de proficiência em IA.
 
 Gere UMA questão de múltipla escolha ({diff_params['description']}) sobre:
 **Competência**: {competency}
@@ -68,23 +68,37 @@ Gere UMA questão de múltipla escolha ({diff_params['description']}) sobre:
 **Dificuldade alvo**: {diff_params['description']}
 {context_str}
 
-REQUISITOS DA QUESTÃO:
-1. **PERSONALIZE para o cargo/área do usuário** - use contexto real dele
-2. Baseada em cenários práticos do dia a dia do trabalho
-3. Teste conhecimento aplicado, não decoreba teórica
-4. 4 alternativas plausíveis e realistas (A, B, C, D)
-5. Uma resposta claramente correta com justificativa
+CRÍTICO - REQUISITOS DA QUESTÃO:
+1. **PERSONALIZE para {user_context['role']} em {user_context['department']}** - use cenário real do trabalho deles
+2. **TESTE CONHECIMENTO TÉCNICO REAL** - não faça perguntas óbvias ou de senso comum
+3. Exija que o usuário demonstre ENTENDIMENTO PROFUNDO de conceitos de IA:
+   - Como funcionam algoritmos/modelos
+   - Quando usar cada técnica
+   - Limitações e trade-offs
+   - Aplicação prática correta
+4. 4 alternativas desafiadoras (todas plausíveis, mas apenas 1 correta)
+5. Evite perguntas genéricas sobre "ética" ou "compliance" - foque em CONHECIMENTO TÉCNICO
+
+EXEMPLOS DO QUE FAZER:
+✅ "Para prever churn de clientes com histórico de 6 meses, qual modelo seria mais eficaz considerando interpretabilidade e acurácia?"
+✅ "Ao usar GPT-4 para análise de sentimento, qual técnica de prompt engineering reduziria viés nos resultados?"
+✅ "Para automatizar classificação de tickets com 50 categorias e poucos exemplos por categoria, qual abordagem é mais adequada?"
+
+EXEMPLOS DO QUE NÃO FAZER:
+❌ "Qual a importância da ética em IA?" (muito genérico)
+❌ "O que é machine learning?" (decoreba básico)
+❌ Cenários longos sobre dilemas éticos sem testar conhecimento técnico
 
 RETORNE JSON:
 {{
-  "stem": "texto da questão (contextualizada, prática, específica)",
-  "choices": ["A...", "B...", "C...", "D..."],
+  "stem": "Cenário específico do trabalho de {user_context['role']} que TESTE conhecimento técnico real",
+  "choices": ["A) Solução técnica 1...", "B) Solução técnica 2...", "C) Solução técnica 3...", "D) Solução técnica 4..."],
   "answer_key": "A|B|C|D",
-  "explanation": "breve justificativa da resposta correta",
-  "rubric_criteria": {{"relevancia": "...", "precisao": "..."}}
+  "explanation": "Por que a resposta está correta tecnicamente",
+  "rubric_criteria": {{"conhecimento_tecnico": "avalia profundidade", "aplicacao_pratica": "avalia uso correto"}}
 }}
 
-NÃO repita questões genéricas. Seja criativo e contextual."""
+Seja DESAFIADOR. Teste se a pessoa realmente ENTENDE IA, não apenas ouviu falar."""
 
         try:
             # Skip if LLM provider is stub
