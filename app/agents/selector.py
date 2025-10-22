@@ -167,12 +167,13 @@ class AgentSelector:
     def _determine_difficulty(self, comp_data: Dict[str, Any]) -> str:
         """
         Determine difficulty level for generated question based on user's score.
+        Score ranges: 0-40 (easy), 40-70 (medium), 70-100 (hard)
         """
         score = comp_data.get('score', 50)
         
-        if score < 35:
+        if score < 40:
             return 'easy'
-        elif score < 65:
+        elif score < 70:
             return 'medium'
         else:
             return 'hard'
@@ -194,9 +195,9 @@ class AgentSelector:
         comp_score = comp_data.get('score', 50)
         ci_width = comp_data.get('ci_high', 80) - comp_data.get('ci_low', 20)
         
-        # Match difficulty to user level
-        difficulty_map = {0: 30, 1: 50, 2: 70}
-        item_difficulty_score = difficulty_map.get(int(item.difficulty_b), 50)
+        # Match difficulty to user level (theta scale converted to 0-100)
+        # b=-1.0 → ~33, b=0.0 → 50, b=1.5 → ~75
+        item_difficulty_score = 50 + (item.difficulty_b * 16.67)
         
         score_diff = abs(comp_score - item_difficulty_score)
         if score_diff < 20:

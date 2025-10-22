@@ -42,11 +42,11 @@ class AgentGenerator:
         if not user_context:
             user_context = {'name': 'Usuário', 'department': 'Geral', 'role': 'Profissional'}
         
-        # Map difficulty to parameters
+        # Map difficulty to IRT parameters (theta scale: -3 to +3)
         difficulty_map = {
-            'easy': {'b': 0, 'a': 0.6, 'description': 'básico/introdutório'},
-            'medium': {'b': 1, 'a': 0.7, 'description': 'intermediário/prático'},
-            'hard': {'b': 2, 'a': 0.9, 'description': 'avançado/especialista'}
+            'easy': {'b': -1.0, 'a': 1.2, 'description': 'básico/introdutório'},
+            'medium': {'b': 0.0, 'a': 1.5, 'description': 'intermediário/prático'},
+            'hard': {'b': 1.5, 'a': 1.8, 'description': 'avançado/especialista'}
         }
         
         diff_params = difficulty_map.get(difficulty_target, difficulty_map['medium'])
@@ -60,45 +60,63 @@ class AgentGenerator:
             for resp in recent:
                 context_str += f"- {resp.get('competency')}: pontuou {resp.get('score', 0):.1f}\n"
         
-        prompt = f"""Você é um especialista em avaliação TÉCNICA de proficiência em IA.
+        # Choose question format randomly for variety
+        import random
+        format_type = random.choice(['scenario', 'technical', 'comparison', 'debugging', 'trade-off'])
+        
+        format_instructions = {
+            'scenario': f"CENÁRIO PRÁTICO: {user_context['role']} precisa resolver problema real de {competency}",
+            'technical': f"CONHECIMENTO TÉCNICO: Teste entendimento profundo de como funcionam algoritmos/técnicas de {competency}",
+            'comparison': f"COMPARAÇÃO: Escolher entre abordagens diferentes para problema específico de {competency}",
+            'debugging': f"DEBUGGING: Identificar problema ou melhorar implementação existente relacionada a {competency}",
+            'trade-off': f"TRADE-OFFS: Avaliar prós/contras de decisões técnicas em contexto de {competency}"
+        }
+        
+        prompt = f"""Você é especialista em avaliação TÉCNICA de IA. Gere questão DESAFIADORA formato: **{format_type.upper()}**
 
-Gere UMA questão de múltipla escolha ({diff_params['description']}) sobre:
 **Competência**: {competency}
-**Nível atual**: {current_score:.0f}/100
-**Dificuldade alvo**: {diff_params['description']}
+**Nível usuário**: {current_score:.0f}/100
+**Dificuldade**: {diff_params['description']}
+**Contexto**: {user_context['role']} em {user_context['department']}
 {context_str}
 
-CRÍTICO - REQUISITOS DA QUESTÃO:
-1. **PERSONALIZE para {user_context['role']} em {user_context['department']}** - use cenário real do trabalho deles
-2. **TESTE CONHECIMENTO TÉCNICO REAL** - não faça perguntas óbvias ou de senso comum
-3. Exija que o usuário demonstre ENTENDIMENTO PROFUNDO de conceitos de IA:
-   - Como funcionam algoritmos/modelos
-   - Quando usar cada técnica
-   - Limitações e trade-offs
-   - Aplicação prática correta
-4. 4 alternativas desafiadoras (todas plausíveis, mas apenas 1 correta)
-5. Evite perguntas genéricas sobre "ética" ou "compliance" - foque em CONHECIMENTO TÉCNICO
+**TIPO DE QUESTÃO**: {format_instructions[format_type]}
 
-EXEMPLOS DO QUE FAZER:
-✅ "Para prever churn de clientes com histórico de 6 meses, qual modelo seria mais eficaz considerando interpretabilidade e acurácia?"
-✅ "Ao usar GPT-4 para análise de sentimento, qual técnica de prompt engineering reduziria viés nos resultados?"
-✅ "Para automatizar classificação de tickets com 50 categorias e poucos exemplos por categoria, qual abordagem é mais adequada?"
+REQUISITOS OBRIGATÓRIOS:
+1. VARIE o tipo de pergunta - não repita sempre "Victor deseja implementar..."
+2. TESTE conhecimento TÉCNICO específico: 
+   - Parâmetros de modelos e como ajustá-los
+   - Trade-offs entre técnicas (acurácia vs interpretabilidade, custo vs performance)
+   - Quando usar supervised vs unsupervised vs reinforcement learning
+   - Limitações de cada abordagem
+   - Debugging e otimização de modelos
+3. 4 alternativas TÉCNICAS (não genéricas) - todas plausíveis
+4. Contextualize no trabalho de {user_context['role']} mas FOQUE em AI/ML
+5. Se dificuldade=avançado: inclua hiperparâmetros, métricas, arquiteturas específicas
 
-EXEMPLOS DO QUE NÃO FAZER:
-❌ "Qual a importância da ética em IA?" (muito genérico)
-❌ "O que é machine learning?" (decoreba básico)
-❌ Cenários longos sobre dilemas éticos sem testar conhecimento técnico
+FORMATOS VARIADOS:
+- "Dado dataset X com características Y, qual arquitetura/técnica é mais apropriada?"
+- "Modelo apresenta problema Z, qual é a causa MAIS provável e solução?"
+- "Entre técnicas A, B, C, D para objetivo X, qual melhor considerando constraints Y?"
+- "Para melhorar métrica X mantendo Y, qual ajuste fazer?"
+- "Código/implementação tem issue X, qual correção?"
+
+NÃO FAZER:
+❌ Sempre começar "Victor/João deseja implementar..."
+❌ Perguntas genéricas sobre ética sem aspecto técnico
+❌ Definições básicas ("O que é machine learning?")
+❌ Perguntas de senso comum
 
 RETORNE JSON:
 {{
-  "stem": "Cenário específico do trabalho de {user_context['role']} que TESTE conhecimento técnico real",
-  "choices": ["A) Solução técnica 1...", "B) Solução técnica 2...", "C) Solução técnica 3...", "D) Solução técnica 4..."],
-  "answer_key": "A|B|C|D",
-  "explanation": "Por que a resposta está correta tecnicamente",
-  "rubric_criteria": {{"conhecimento_tecnico": "avalia profundidade", "aplicacao_pratica": "avalia uso correto"}}
+  "stem": "Pergunta técnica direta e específica (varie formato!)",
+  "choices": ["A) Solução técnica específica", "B) Outra abordagem técnica", "C) Alternativa técnica", "D) Mais uma opção técnica"],
+  "answer_key": "A/B/C/D",
+  "explanation": "Justificativa técnica detalhada",
+  "rubric_criteria": {{"profundidade_tecnica": "entendimento conceitos", "aplicacao": "usar corretamente"}}
 }}
 
-Seja DESAFIADOR. Teste se a pessoa realmente ENTENDE IA, não apenas ouviu falar."""
+SEJA TÉCNICO E VARIADO!"""
 
         try:
             # Skip if LLM provider is stub
