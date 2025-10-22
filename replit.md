@@ -6,7 +6,7 @@ OAZ IA Profiler is an adaptive AI proficiency assessment platform that evaluates
 
 The application features a multi-agent ecosystem where specialized agents handle question selection, response grading, proficiency scoring, and recommendation generation. Assessment sessions adapt in real-time, converging on accurate proficiency estimates while minimizing test duration.
 
-**Status**: ✅ Production ready (v1.1.0) - OpenAI integration active, adaptive question generation, intelligent semantic evaluation
+**Status**: ✅ Production ready (v1.2.0) - 100% OpenAI adaptive generation, corrected IRT scoring, varied technical question formats
 
 ## User Preferences
 
@@ -32,21 +32,22 @@ Preferred communication style: Simple, everyday language.
 The application implements an internal agent ecosystem coordinated by `AgentOrchestrator`:
 
 1. **AgentProfiler**: Initializes proficiency baseline from initial response (P0 question)
-2. **AgentSelector**: Selects optimal next question using IRT principles, diversity heuristics, and **adaptive question generation** (40% probability after 2+ responses)
-3. **AgentGrader**: Grades MCQ (deterministic) and open-ended responses using **GPT-5 semantic analysis** for intelligent rubric-based evaluation
-4. **AgentScorer**: Updates competency scores using IRT-lite algorithm with confidence intervals
+2. **AgentSelector**: **100% adaptive generation** - all questions generated via OpenAI based on user context (name, role, department) and performance
+3. **AgentGrader**: Grades MCQ (deterministic) and open-ended responses using **GPT-4o semantic analysis** for intelligent rubric-based evaluation
+4. **AgentScorer**: Updates competency scores using **corrected IRT algorithm** with proper theta scale conversion (-3 to +3) and Bayesian updates
 5. **AgentRecommender**: Generates personalized learning tracks based on proficiency gaps
-6. **AgentGenerator**: **Dynamically creates personalized questions** using GPT-5 based on user's current proficiency level, competency focus, and response history
+6. **AgentGenerator**: **Dynamically creates personalized questions** using GPT-4o with **5 varied formats** (scenario, technical, comparison, debugging, trade-off)
 7. **AgentContentQA**: Validates new assessment items for quality assurance
 
 Each agent maintains separation of concerns while the orchestrator coordinates state management and decision flow.
 
-### Adaptive Assessment Algorithm (IRT-lite)
-- **Proficiency tracking** per competency (0-100 scale) with confidence intervals
-- **Dynamic difficulty adjustment** based on response accuracy and item characteristics
-- Item parameters include difficulty (b: 0-2) and discrimination (a: 0-1)
+### Adaptive Assessment Algorithm (IRT with Theta Scale)
+- **Proficiency tracking** per competency (0-100 scale displayed, theta -3 to +3 internally) with confidence intervals
+- **Dynamic difficulty adjustment** using proper IRT logistic model: P(correct) = 1/(1 + exp(-a*(theta - b)))
+- Item parameters on theta scale: difficulty_b (-1.0 to +1.5) and discrimination_a (1.2 to 1.8)
+- **Adaptive difficulty routing**: easy (score <40), medium (40-70), hard (>70)
 - **Convergence criteria**: minimum 8 items, maximum 12 items, CI ≤ 12 points on 6+ competencies, or 12-minute timeout
-- Bayesian-inspired updates that reduce uncertainty with each response
+- Bayesian-inspired theta updates that accurately reflect performance (no score plateau at ~55)
 
 ### Data Models
 Database schema implemented with SQLAlchemy models:
@@ -79,12 +80,12 @@ Database schema implemented with SQLAlchemy models:
 - CSV/XLSX export capabilities for administrative reporting
 
 ### LLM Integration Layer
-Abstraction through `LLMProvider` class with **full OpenAI integration** (GPT-5):
-- **Adaptive question generation**: Creates personalized questions dynamically based on user proficiency level
+Abstraction through `LLMProvider` class with **full OpenAI integration** (GPT-4o):
+- **100% adaptive question generation**: All questions personalized using user context (name, role, department) and response history
+- **5 varied question formats**: Randomizes between scenario, technical, comparison, debugging, and trade-off assessments
 - **Semantic response evaluation**: Intelligent rubric-based grading for open-ended responses with detailed feedback
 - **Content moderation**: Safety checks using OpenAI moderation API
-- **Graceful degradation**: Automatically falls back to deterministic logic when API key is unavailable
-- Uses GPT-5 (latest model as of August 2025) with JSON structured outputs for reliability
+- Uses GPT-4o model with JSON structured outputs for reliability and proper `max_completion_tokens` parameter
 
 ## External Dependencies
 
@@ -111,7 +112,7 @@ Core dependencies from `requirements.txt`:
 ### Environment Configuration
 Managed via `.env` file with variables:
 - `APP_SECRET`/`SESSION_SECRET`: Flask session encryption key
-- **`OPENAI_API_KEY`**: OpenAI API key for GPT-5 integration (adaptive questions & semantic evaluation)
+- **`OPENAI_API_KEY`**: OpenAI API key for GPT-4o integration (100% adaptive questions & semantic evaluation)
 - `SENDGRID_API_KEY`: Email service authentication
 - `ALLOWED_EMAIL_DOMAIN`: Domain restriction (default: oaz.co)
 - `BASE_URL`: Application base URL for magic links
