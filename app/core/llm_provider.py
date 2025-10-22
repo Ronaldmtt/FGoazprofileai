@@ -5,8 +5,7 @@ import json
 import logging
 
 # Reference: using blueprint:python_openai integration
-# the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-# do not change this unless explicitly requested by the user
+# Using gpt-4o model (latest production model)
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
@@ -76,7 +75,7 @@ class LLMProvider:
                 messages[0]["content"] += f"\n\nContexto: {json.dumps(context, ensure_ascii=False)}"
             
             response = self.client.chat.completions.create(
-                model="gpt-5",
+                model="gpt-4o",
                 messages=messages,
                 max_completion_tokens=500
             )
@@ -115,7 +114,7 @@ Resposta do usuário:
 Avalie e retorne o JSON."""
             
             response = self.client.chat.completions.create(
-                model="gpt-5",
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}

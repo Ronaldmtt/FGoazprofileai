@@ -95,7 +95,7 @@ NÃO repita questões genéricas. Seja criativo e contextual."""
             logger.info(f"[ADAPTIVE] Calling OpenAI for user {user_context['name']} ({user_context['role']} - {user_context['department']})")
             
             response = self.llm.client.chat.completions.create(
-                model="gpt-5",
+                model="gpt-4o",
                 messages=[
                     {
                         "role": "system",
@@ -111,7 +111,17 @@ NÃO repita questões genéricas. Seja criativo e contextual."""
             )
             
             # Log response for debugging
-            raw_content = response.choices[0].message.content
+            logger.info(f"[ADAPTIVE] OpenAI response object: {response}")
+            logger.info(f"[ADAPTIVE] Response choices: {response.choices}")
+            
+            message = response.choices[0].message
+            raw_content = message.content
+            
+            # Check for refusal
+            if hasattr(message, 'refusal') and message.refusal:
+                logger.error(f"[ADAPTIVE] OpenAI REFUSED to generate: {message.refusal}")
+                return None
+            
             logger.info(f"[ADAPTIVE] OpenAI raw response (first 200 chars): {raw_content[:200] if raw_content else 'EMPTY/NONE'}")
             
             if not raw_content:
