@@ -160,6 +160,61 @@ def heatmap():
     
     return jsonify(competency_stats)
 
+@bp.route('/users', methods=['GET'])
+@require_admin
+def users_list():
+    """List all users with their assessment results."""
+    return render_template('admin/users.html')
+
+@bp.route('/users/data', methods=['GET'])
+@require_admin
+def users_data():
+    """Get list of all users with their scores."""
+    users = User.query.all()
+    irt = IRTScorer()
+    
+    users_list = []
+    for user in users:
+        # Get the most recent completed session
+        session = Session.query.filter_by(
+            user_id=user.id, 
+            status='completed'
+        ).order_by(Session.ended_at.desc()).first()
+        
+        if session:
+            snapshots = ProficiencySnapshot.query.filter_by(session_id=session.id).all()
+            scores = {s.competency: s.score_0_100 for s in snapshots}
+            
+            global_score = irt.calculate_global_score(scores)
+            global_level = irt.calculate_level(global_score)
+            
+            users_list.append({
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'department': user.department or 'N/A',
+                'role': user.role or 'N/A',
+                'global_score': round(global_score, 1),
+                'global_level': global_level,
+                'completed_at': session.ended_at.isoformat() if session.ended_at else None,
+                'time_spent_s': session.time_spent_s
+            })
+        else:
+            # User registered but hasn't completed assessment
+            users_list.append({
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'department': user.department or 'N/A',
+                'role': user.role or 'N/A',
+                'global_score': None,
+                'global_level': 'Pendente',
+                'completed_at': None,
+                'time_spent_s': None
+            })
+    
+    return jsonify(users_list)
+
 @bp.route('/users/<int:user_id>', methods=['GET'])
 @require_admin
 def user_detail(user_id):

@@ -72,15 +72,27 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Exportar Dados</h3>
-            <div class="space-x-2">
-                <a href="/admin/export.csv" class="inline-block bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition text-sm">
-                    Download CSV
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
+            <div class="space-y-3">
+                <a href="/admin/users" class="block w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition text-center font-medium">
+                    📋 Ver Lista de Usuários
                 </a>
-                <a href="/admin/export.xlsx" class="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm">
-                    Download Excel
+                <p class="text-sm text-gray-600 text-center">
+                    Visualize todos os usuários e suas pontuações
+                </p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Exportar Dados</h3>
+            <div class="space-y-2">
+                <a href="/admin/export.csv" class="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition text-center font-medium">
+                    📥 Download CSV
+                </a>
+                <a href="/admin/export.xlsx" class="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition text-center font-medium">
+                    📊 Download Excel
                 </a>
             </div>
         </div>
