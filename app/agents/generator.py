@@ -62,61 +62,75 @@ class AgentGenerator:
         
         # Choose question format randomly for variety
         import random
-        format_type = random.choice(['scenario', 'technical', 'comparison', 'debugging', 'trade-off'])
+        format_type = random.choice(['practical', 'tool_usage', 'real_scenario', 'decision', 'application'])
         
-        format_instructions = {
-            'scenario': f"CENÁRIO PRÁTICO: {user_context['role']} precisa resolver problema real de {competency}",
-            'technical': f"CONHECIMENTO TÉCNICO: Teste entendimento profundo de como funcionam algoritmos/técnicas de {competency}",
-            'comparison': f"COMPARAÇÃO: Escolher entre abordagens diferentes para problema específico de {competency}",
-            'debugging': f"DEBUGGING: Identificar problema ou melhorar implementação existente relacionada a {competency}",
-            'trade-off': f"TRADE-OFFS: Avaliar prós/contras de decisões técnicas em contexto de {competency}"
+        # Simplify based on difficulty
+        level_guidance = {
+            'easy': 'Perguntas SIMPLES para quem está começando a usar IA no trabalho',
+            'medium': 'Perguntas práticas para quem já usa IA regularmente',
+            'hard': 'Perguntas para especialistas que dominam IA profundamente'
         }
         
-        prompt = f"""Você é especialista em avaliação TÉCNICA de IA. Gere questão DESAFIADORA formato: **{format_type.upper()}**
+        prompt = f"""Você é um especialista em criar avaliações PRÁTICAS de uso de IA no trabalho.
 
-**Competência**: {competency}
-**Nível usuário**: {current_score:.0f}/100
-**Dificuldade**: {diff_params['description']}
-**Contexto**: {user_context['role']} em {user_context['department']}
-{context_str}
+CONTEXTO DA AVALIAÇÃO:
+- **Objetivo**: Identificar o nível de conhecimento em IA dos colaboradores da OAZ
+- **Público**: Todos os funcionários (desde quem nunca usou IA até especialistas)
+- **Finalidade**: Direcionar pessoas para treinamentos adequados ao seu nível
 
-**TIPO DE QUESTÃO**: {format_instructions[format_type]}
+DADOS DO USUÁRIO:
+- Competência avaliada: {competency}
+- Cargo: {user_context['role']}
+- Área: {user_context['department']}
+- Nível atual: {diff_params['description']}
 
-REQUISITOS OBRIGATÓRIOS:
-1. VARIE o tipo de pergunta - não repita sempre "Victor deseja implementar..."
-2. TESTE conhecimento TÉCNICO específico: 
-   - Parâmetros de modelos e como ajustá-los
-   - Trade-offs entre técnicas (acurácia vs interpretabilidade, custo vs performance)
-   - Quando usar supervised vs unsupervised vs reinforcement learning
-   - Limitações de cada abordagem
-   - Debugging e otimização de modelos
-3. 4 alternativas TÉCNICAS (não genéricas) - todas plausíveis
-4. Contextualize no trabalho de {user_context['role']} mas FOQUE em AI/ML
-5. Se dificuldade=avançado: inclua hiperparâmetros, métricas, arquiteturas específicas
+{level_guidance[difficulty_target]}
 
-FORMATOS VARIADOS:
-- "Dado dataset X com características Y, qual arquitetura/técnica é mais apropriada?"
-- "Modelo apresenta problema Z, qual é a causa MAIS provável e solução?"
-- "Entre técnicas A, B, C, D para objetivo X, qual melhor considerando constraints Y?"
-- "Para melhorar métrica X mantendo Y, qual ajuste fazer?"
-- "Código/implementação tem issue X, qual correção?"
+INSTRUÇÕES PARA CRIAR A PERGUNTA:
 
-NÃO FAZER:
-❌ Sempre começar "Victor/João deseja implementar..."
-❌ Perguntas genéricas sobre ética sem aspecto técnico
-❌ Definições básicas ("O que é machine learning?")
-❌ Perguntas de senso comum
+1. **SEJA DIRETO E PRÁTICO**: 
+   - Pergunte sobre situações REAIS de trabalho
+   - Use linguagem simples e clara
+   - Foque em "como fazer" ou "o que usar"
+
+2. **EXEMPLOS DE PERGUNTAS BOAS**:
+   - "Você precisa resumir 50 páginas de um relatório. Qual ferramenta de IA é mais adequada?"
+   - "Sua equipe quer automatizar respostas a emails comuns. Qual a melhor opção?"
+   - "Você precisa criar uma apresentação sobre vendas. Como a IA pode ajudar?"
+   - "Um cliente pergunta sobre privacidade ao usar ChatGPT. O que é verdade?"
+
+3. **DIFICULDADE POR NÍVEL**:
+   - **Básico**: Pergunte sobre ferramentas conhecidas (ChatGPT, Copilot), usos simples
+   - **Intermediário**: Cenários de trabalho comuns, escolha entre ferramentas
+   - **Avançado**: Otimização, boas práticas, limitações técnicas
+
+4. **AS 4 ALTERNATIVAS DEVEM SER**:
+   - Claras e diretas
+   - Relacionadas ao contexto de trabalho
+   - Plausíveis (evite opções obviamente erradas)
+   - Sem jargões técnicos complexos
+
+5. **NÃO FAÇA**:
+   ❌ Perguntas muito técnicas sobre algoritmos ou matemática
+   ❌ Termos complexos que só especialistas conhecem
+   ❌ Perguntas teóricas sem aplicação prática
+   ❌ Sempre começar com "Você deseja implementar..."
 
 RETORNE JSON:
 {{
-  "stem": "Pergunta técnica direta e específica (varie formato!)",
-  "choices": ["A) Solução técnica específica", "B) Outra abordagem técnica", "C) Alternativa técnica", "D) Mais uma opção técnica"],
+  "stem": "Pergunta DIRETA sobre uso prático de IA no trabalho",
+  "choices": [
+    "A) Primeira opção prática",
+    "B) Segunda opção prática", 
+    "C) Terceira opção prática",
+    "D) Quarta opção prática"
+  ],
   "answer_key": "A/B/C/D",
-  "explanation": "Justificativa técnica detalhada",
-  "rubric_criteria": {{"profundidade_tecnica": "entendimento conceitos", "aplicacao": "usar corretamente"}}
+  "explanation": "Explicação simples e clara do porquê",
+  "rubric_criteria": {{"uso_pratico": "sabe usar IA no trabalho", "conhecimento": "entende quando aplicar"}}
 }}
 
-SEJA TÉCNICO E VARIADO!"""
+LEMBRE-SE: Esta é uma avaliação corporativa para identificar níveis e direcionar treinamentos!"""
 
         try:
             # Skip if LLM provider is stub

@@ -6,7 +6,7 @@ OAZ IA Profiler is an adaptive AI proficiency assessment platform that evaluates
 
 The application features a multi-agent ecosystem where specialized agents handle question selection, response grading, proficiency scoring, and recommendation generation. Assessment sessions adapt in real-time, converging on accurate proficiency estimates while minimizing test duration.
 
-**Status**: ✅ Production ready (v1.2.0) - 100% OpenAI adaptive generation, corrected IRT scoring, varied technical question formats
+**Status**: ✅ Production ready (v1.3.0) - Perguntas práticas e diretas para todos os níveis, de iniciantes a especialistas
 
 ## User Preferences
 
@@ -36,7 +36,7 @@ The application implements an internal agent ecosystem coordinated by `AgentOrch
 3. **AgentGrader**: Grades MCQ (deterministic) and open-ended responses using **GPT-4o semantic analysis** for intelligent rubric-based evaluation
 4. **AgentScorer**: Updates competency scores using **corrected IRT algorithm** with proper theta scale conversion (-3 to +3) and Bayesian updates
 5. **AgentRecommender**: Generates personalized learning tracks based on proficiency gaps
-6. **AgentGenerator**: **Dynamically creates personalized questions** using GPT-4o with **5 varied formats** (scenario, technical, comparison, debugging, trade-off)
+6. **AgentGenerator**: **Dynamically creates practical, work-focused questions** using GPT-4o - perguntas diretas e simples focadas no uso real de IA no trabalho, adequadas para todos os níveis (de quem nunca usou IA até especialistas)
 7. **AgentContentQA**: Validates new assessment items for quality assurance
 
 Each agent maintains separation of concerns while the orchestrator coordinates state management and decision flow.
@@ -81,8 +81,10 @@ Database schema implemented with SQLAlchemy models:
 
 ### LLM Integration Layer
 Abstraction through `LLMProvider` class with **full OpenAI integration** (GPT-4o):
-- **100% adaptive question generation**: All questions personalized using user context (name, role, department) and response history
-- **5 varied question formats**: Randomizes between scenario, technical, comparison, debugging, and trade-off assessments
+- **100% adaptive question generation**: Perguntas práticas e diretas personalizadas ao contexto do usuário (cargo, área, nível)
+- **Foco no uso real de IA**: Perguntas sobre ferramentas e situações práticas do dia a dia de trabalho
+- **Adequado para todos os níveis**: Desde colaboradores que nunca usaram IA até especialistas avançados
+- **Objetivo corporativo**: Identificar níveis de conhecimento para direcionar treinamentos adequados
 - **Semantic response evaluation**: Intelligent rubric-based grading for open-ended responses with detailed feedback
 - **Content moderation**: Safety checks using OpenAI moderation API
 - Uses GPT-4o model with JSON structured outputs for reliability and proper `max_completion_tokens` parameter
