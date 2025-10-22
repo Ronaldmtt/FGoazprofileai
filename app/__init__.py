@@ -36,6 +36,11 @@ def create_app(config_class=Config):
             from flask import redirect, url_for
             return redirect(url_for('auth.login_page'))
         
+        @app.route('/health')
+        def health_check():
+            """Health check endpoint for deployment."""
+            return {'status': 'healthy', 'service': 'oaz-ia-profiler'}, 200
+        
         from app.models import user, session as session_model, item, response, snapshot, recommendation, audit
         
         db.create_all()
