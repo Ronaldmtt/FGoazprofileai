@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, send_file, session as flask_session
+from flask import Blueprint, request, jsonify, render_template, send_file, session as flask_session, redirect, url_for
 from app.models import User, Session, Item, Response, ProficiencySnapshot
 from app.agents.content_qa import AgentContentQA
 from app.services.exporter import export_to_csv, export_to_xlsx
@@ -7,18 +7,60 @@ from app.core.scoring import IRTScorer
 from app import db
 from sqlalchemy import func
 import json
+import os
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 def require_admin(f):
-    """Decorator to require admin access (simplified for MVP)."""
+    """Decorator to require admin authentication."""
     from functools import wraps
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in flask_session:
-            return jsonify({'error': 'Não autenticado'}), 401
+        if not flask_session.get('is_admin'):
+            return redirect(url_for('admin.login_page'))
         return f(*args, **kwargs)
     return decorated_function
+
+@bp.route('/login', methods=['GET'])
+def login_page():
+    """Admin login page."""
+    return render_template('admin/login.html')
+
+@bp.route('/login', methods=['POST'])
+def login():
+    """Authenticate admin user."""
+    data = request.get_json() if request.is_json else request.form
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+    
+    # Get admin credentials from environment
+    admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    admin_password = os.environ.get('ADMIN_PASSWORD', '')
+    
+    if not admin_password:
+        return jsonify({'error': 'Credenciais de admin não configuradas'}), 500
+    
+    if username == admin_username and password == admin_password:
+        flask_session['is_admin'] = True
+        flask_session['admin_username'] = username
+        
+        log_audit(
+            actor=username,
+            action='admin_login',
+            target='admin',
+            payload={}
+        )
+        
+        return jsonify({'success': True, 'redirect': url_for('admin.dashboard')})
+    
+    return jsonify({'error': 'Usuário ou senha incorretos'}), 401
+
+@bp.route('/logout', methods=['POST', 'GET'])
+def logout():
+    """Logout admin user."""
+    flask_session.pop('is_admin', None)
+    flask_session.pop('admin_username', None)
+    return redirect(url_for('admin.login_page'))
 
 @bp.route('/dashboard', methods=['GET'])
 @require_admin
