@@ -48,6 +48,19 @@ class AgentGenerator:
         # Build context from history
         context_str = f"\n**Perfil do Usuário**:\n- Nome: {user_context['name']}\n- Área: {user_context['department']}\n- Cargo: {user_context['role']}\n"
         
+        # Add previously asked questions to AVOID REPETITION
+        previous_questions = []
+        if response_history:
+            for resp in response_history[-5:]:  # Last 5 questions
+                if 'stem' in resp:
+                    previous_questions.append(resp['stem'])
+        
+        if previous_questions:
+            context_str += f"\n**IMPORTANTE - NÃO REPITA estas perguntas já feitas**:\n"
+            for i, q in enumerate(previous_questions, 1):
+                context_str += f"{i}. {q}\n"
+            context_str += "\n**Você DEVE criar uma pergunta DIFERENTE das acima!**\n"
+        
         # Show example questions from this block
         examples_str = "\n**Exemplos de perguntas deste bloco**:\n"
         for example in block_examples[:2]:
