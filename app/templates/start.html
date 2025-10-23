@@ -38,10 +38,15 @@
         <button 
             @click="startSession"
             :disabled="loading || !initialResponse || initialResponse.length < 5"
-            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+            :class="loading ? 'bg-gray-500 cursor-wait' : 'bg-blue-600 hover:bg-blue-700'"
+            class="w-full text-white py-3 px-4 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
         >
+            <svg x-show="loading" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
             <span x-show="!loading">Iniciar Avaliação</span>
-            <span x-show="loading">Iniciando...</span>
+            <span x-show="loading">Processando...</span>
         </button>
     </div>
 </div>
@@ -54,6 +59,9 @@ function startForm() {
         error: '',
         
         async startSession() {
+            // Prevenir múltiplos cliques
+            if (this.loading) return;
+            
             this.error = '';
             this.loading = true;
             
@@ -71,13 +79,14 @@ function startForm() {
                 const data = await response.json();
                 
                 if (response.ok) {
+                    // Mantém loading true enquanto redireciona
                     window.location.href = data.redirect;
                 } else {
                     this.error = data.error || 'Erro ao iniciar sessão';
+                    this.loading = false;
                 }
             } catch (err) {
                 this.error = 'Erro de conexão. Tente novamente.';
-            } finally {
                 this.loading = false;
             }
         }
