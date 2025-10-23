@@ -67,11 +67,11 @@ class AgentGenerator:
 
 **FORMATO OBRIGATÓRIO - MATRIZ DE 4 ALTERNATIVAS PROGRESSIVAS**:
 
-As 4 alternativas devem representar os 4 níveis de maturidade em IA:
-- **Opção A (1 ponto)**: Iniciante - nunca usou, não conhece, vê como distante
-- **Opção B (2 pontos)**: Explorador - já testou, tem noção básica, curioso  
-- **Opção C (3 pontos)**: Praticante - usa regularmente, entende conceitos, integra ao trabalho
-- **Opção D (4 pontos)**: Líder Digital - domina, ensina outros, influencia, automatiza
+As 4 alternativas devem representar níveis crescentes de maturidade em IA, do menos ao mais experiente:
+- **Opção A**: Iniciante - nunca usou, não conhece, vê como distante
+- **Opção B**: Explorador - já testou, tem noção básica, curioso  
+- **Opção C**: Praticante - usa regularmente, entende conceitos, integra ao trabalho
+- **Opção D**: Líder Digital - domina, ensina outros, influencia, automatiza
 
 **REGRAS CRÍTICAS**:
 
@@ -91,29 +91,35 @@ As 4 alternativas devem representar os 4 níveis de maturidade em IA:
    - Exemplos relevantes ao cargo {user_context['role']}
    - Situações práticas do dia a dia
 
+4. **IMPORTANTE - NÃO REVELE O SISTEMA DE PONTUAÇÃO**:
+   - NÃO inclua pontos (ex: "1 pt", "2 pontos") nas alternativas
+   - NÃO inclua níveis (ex: "Iniciante", "Explorador") nas alternativas
+   - As alternativas devem conter APENAS o texto descritivo da opção
+   - O usuário NÃO deve saber qual alternativa vale mais pontos
+
 **EXEMPLO DE BOA PERGUNTA**:
 
 Pergunta: "Com que frequência você usa ferramentas de IA (ChatGPT, Copilot, etc.) no seu trabalho?"
 
-A) Nunca usei ou testei apenas por curiosidade (1 pt - Iniciante)
-B) Uso ocasionalmente para algumas tarefas específicas (2 pts - Explorador)  
-C) Uso frequentemente e integrei nos meus fluxos de trabalho (3 pts - Praticante)
-D) Uso diariamente, automatizo processos e ensino outros colegas (4 pts - Líder)
+A) Nunca usei ou testei apenas por curiosidade
+B) Uso ocasionalmente para algumas tarefas específicas
+C) Uso frequentemente e integrei nos meus fluxos de trabalho
+D) Uso diariamente, automatizo processos e ensino outros colegas
 
-**RETORNE JSON**:
+**RETORNE JSON (SEM PONTOS OU NÍVEIS NAS ALTERNATIVAS)**:
 {{
   "stem": "Pergunta clara e direta relacionada ao bloco '{block_name}'",
   "choices": [
-    "A) Nível Iniciante - descrição realista e sem julgamento",
-    "B) Nível Explorador - já tem alguma experiência",
-    "C) Nível Praticante - uso regular e consciente",
-    "D) Nível Líder - domínio, autonomia e influência"
+    "Nunca considerei ou não vejo relevância",
+    "Já ouvi falar e tenho curiosidade de testar",
+    "Uso regularmente e vejo benefícios claros",
+    "Domino completamente e ajudo outros a usar"
   ],
   "progressive_levels": true,
   "block": "{block_name}"
 }}
 
-LEMBRE-SE: Esta não é uma prova com "certas" e "erradas". É uma avaliação de maturidade onde cada pessoa escolhe a opção que MELHOR REFLETE sua realidade atual!"""
+LEMBRE-SE: Esta não é uma prova com "certas" e "erradas". É uma avaliação de maturidade onde cada pessoa escolhe a opção que MELHOR REFLETE sua realidade atual! **NUNCA inclua pontos ou classificações de nível nas alternativas mostradas ao usuário.**"""
 
         try:
             # Skip if LLM provider is stub
