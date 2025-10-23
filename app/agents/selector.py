@@ -1,6 +1,7 @@
 from typing import Dict, Any, List, Optional
 from app.models import Item, Response
 from app.agents.generator import AgentGenerator
+from app.agents.semantic_validator import SemanticValidator
 from app import db
 import random
 import logging
@@ -11,10 +12,12 @@ class AgentSelector:
     """
     Selects next question to maximize information gain.
     Can use existing items OR generate adaptive questions dynamically.
+    Now includes semantic validation and adaptive difficulty progression.
     """
     
     def __init__(self):
         self.generator = AgentGenerator()
+        self.validator = SemanticValidator()
     
     def select_next_item(
         self,
@@ -65,44 +68,110 @@ class AgentSelector:
         logger.info(f"[ADAPTIVE] should_generate={should_generate}, history_length={len(response_history)}")
         
         if should_generate:
-            # Generate adaptive question for competency needing focus
-            target_comp = self._select_target_competency(proficiency, response_history)
-            difficulty = self._determine_difficulty(proficiency.get(target_comp, {}))
+            # Analyze performance patterns for adaptive difficulty
+            difficulty_analysis = self.validator.analyze_difficulty_progression(response_history)
+            logger.info(f"[ADAPTIVE] Difficulty analysis: {difficulty_analysis}")
             
-            logger.info(f"[ADAPTIVE] Generating question for {target_comp} at {difficulty} level")
-            
-            generated_data = self.generator.generate_adaptive_question(
-                competency=target_comp,
-                current_score=proficiency.get(target_comp, {}).get('score', 50),
-                difficulty_target=difficulty,
-                response_history=response_history,
-                user_context=user_context
+            # Select target competency with thematic clustering
+            target_comp = self._select_target_competency_with_clustering(
+                proficiency, 
+                response_history
             )
             
-            if generated_data:
-                logger.info(f"[ADAPTIVE] Successfully generated question: {generated_data['stem'][:80]}...")
-                # Create and save generated item
-                generated_item = Item(
-                    stem=generated_data['stem'],
-                    type=generated_data['type'],
-                    competency=generated_data['competency'],
-                    difficulty_b=generated_data['difficulty_b'],
-                    discrimination_a=generated_data['discrimination_a'],
-                    choices=generated_data.get('choices'),
-                    answer_key=generated_data.get('answer_key'),
-                    rubric=generated_data.get('rubric'),
-                    tags=generated_data.get('tags', ''),
-                    active=True
+            # Determine difficulty with progressive adaptation
+            base_difficulty = self._determine_difficulty(proficiency.get(target_comp, {}))
+            adapted_difficulty = self._adapt_difficulty_based_on_performance(
+                base_difficulty, 
+                difficulty_analysis
+            )
+            
+            logger.info(f"[ADAPTIVE] Target: {target_comp} | Base: {base_difficulty} | Adapted: {adapted_difficulty}")
+            
+            # Get recent questions for semantic validation
+            recent_questions = [r.get('stem', '') for r in response_history[-3:] if 'stem' in r]
+            
+            # Try to generate valid question (with retry logic)
+            max_retries = 3
+            for attempt in range(max_retries):
+                generated_data = self.generator.generate_adaptive_question(
+                    competency=target_comp,
+                    current_score=proficiency.get(target_comp, {}).get('score', 50),
+                    difficulty_target=adapted_difficulty,
+                    response_history=response_history,
+                    user_context=user_context
                 )
-                db.session.add(generated_item)
-                db.session.commit()
                 
-                logger.info(f"[ADAPTIVE] Created item ID {generated_item.id} in database")
-                return generated_item
-            else:
-                # NO FALLBACK - if generation fails, return None to indicate error
-                logger.error("[ADAPTIVE] Generation FAILED - OpenAI did not generate question")
-                return None
+                if not generated_data:
+                    logger.error(f"[ADAPTIVE] Generation FAILED on attempt {attempt + 1}")
+                    continue
+                
+                # Validate semantic distance
+                semantic_validation = self.validator.validate_semantic_distance(
+                    new_question=generated_data['stem'],
+                    recent_questions=recent_questions,
+                    competency=target_comp
+                )
+                
+                logger.info(f"[ADAPTIVE] Semantic validation (attempt {attempt + 1}): {semantic_validation}")
+                
+                if not semantic_validation['valid']:
+                    logger.warning(f"[ADAPTIVE] Question REJECTED (semantic): {semantic_validation['reason']}")
+                    continue
+                
+                # Validate question quality (ambiguity, choice balance)
+                quality_validation = self.validator.validate_question_quality(generated_data)
+                
+                logger.info(f"[ADAPTIVE] Quality validation (attempt {attempt + 1}): Score={quality_validation.get('quality_score', 0):.1f}")
+                
+                if quality_validation['valid']:
+                    logger.info(f"[ADAPTIVE] ✅ Question passed ALL validations: {generated_data['stem'][:80]}...")
+                    logger.info(f"[ADAPTIVE] Quality checks: {quality_validation.get('checks', [])}")
+                    
+                    # Create and save generated item with validation metadata
+                    generated_item = Item(
+                        stem=generated_data['stem'],
+                        type=generated_data['type'],
+                        competency=generated_data['competency'],
+                        difficulty_b=generated_data['difficulty_b'],
+                        discrimination_a=generated_data['discrimination_a'],
+                        choices=generated_data.get('choices'),
+                        answer_key=generated_data.get('answer_key'),
+                        rubric=generated_data.get('rubric'),
+                        tags=generated_data.get('tags', '') + ',validated,high_quality',
+                        active=True
+                    )
+                    
+                    # Store validation metadata
+                    if 'metadata' not in generated_data:
+                        generated_data['metadata'] = {}
+                    generated_data['metadata']['quality_score'] = quality_validation.get('quality_score', 0)
+                    generated_data['metadata']['semantic_score'] = semantic_validation.get('avg_similarity', 0)
+                    
+                    db.session.add(generated_item)
+                    db.session.commit()
+                    
+                    logger.info(f"[ADAPTIVE] ✅ Created validated item ID {generated_item.id} (Quality: {quality_validation.get('quality_score', 0):.1f}/100)")
+                    return generated_item
+                else:
+                    logger.warning(f"[ADAPTIVE] ❌ Question REJECTED (quality): {quality_validation['reason']}")
+                    logger.warning(f"[ADAPTIVE] Quality details: {quality_validation.get('checks', [])}")
+                    # Retry with different generation
+                    continue
+            
+            # If all retries failed, fallback to existing items
+            logger.error(f"[ADAPTIVE] All {max_retries} generation attempts failed validation")
+            logger.info("[ADAPTIVE] 🔄 Graceful fallback: selecting from existing item bank")
+            # Continue to fallback below (don't return None)
+        
+        # Fallback: Select best existing item from scored_items
+        if scored_items:
+            selected_item = scored_items[0][1]  # Highest scored item
+            logger.info(f"[FALLBACK] Selected existing item ID {selected_item.id}: {selected_item.stem[:60]}...")
+            return selected_item
+        
+        # No items available at all
+        logger.error("[FALLBACK] No items available (neither generated nor existing)")
+        return None
     
     def _should_generate_adaptive(
         self,
@@ -111,9 +180,19 @@ class AgentSelector:
     ) -> bool:
         """
         Decide if we should generate adaptive question vs. use existing.
-        NOW: Always generate adaptive questions (100% personalized)
+        Prefers adaptive generation but allows graceful degradation.
         """
-        # ALWAYS generate personalized questions using OpenAI
+        # Try to generate adaptive questions when:
+        # 1. We have enough history to personalize (2+ responses)
+        # 2. User is making progress (not stuck on first questions)
+        
+        if len(response_history) < 2:
+            # Use existing items for first few questions (baseline)
+            logger.info("[ADAPTIVE] Using existing items for baseline (history < 2)")
+            return False
+        
+        # After baseline, prefer adaptive generation
+        # But system will fallback gracefully if generation fails
         return True
     
     def _select_target_competency(
@@ -163,6 +242,101 @@ class AgentSelector:
         
         # Fallback
         return list(proficiency.keys())[0] if proficiency else "Fundamentos de IA/ML & LLMs"
+    
+    def _select_target_competency_with_clustering(
+        self,
+        proficiency: Dict[str, Any],
+        response_history: List[Dict[str, Any]]
+    ) -> str:
+        """
+        Enhanced version with thematic clustering to avoid jarring topic jumps.
+        Prioritizes competencies in same thematic cluster when appropriate.
+        """
+        # Get current thematic cluster
+        recent_comps = [r.get('competency') for r in response_history[-4:] if 'competency' in r]
+        recent_clusters = [self.validator.get_thematic_cluster(c) for c in recent_comps if c]
+        
+        current_cluster = recent_clusters[-1] if recent_clusters else None
+        
+        # Check if we should switch clusters
+        should_switch = self.validator.should_switch_cluster(
+            current_cluster=current_cluster,
+            recent_clusters=recent_clusters,
+            response_history=response_history
+        ) if current_cluster else False
+        
+        logger.info(f"[CLUSTERING] Current: {current_cluster} | Should switch: {should_switch}")
+        
+        # Score competencies with cluster awareness
+        comp_scores = []
+        for comp, data in proficiency.items():
+            score = 0.0
+            comp_cluster = self.validator.get_thematic_cluster(comp)
+            
+            # Base scoring (uncertainty, coverage, recency)
+            ci_width = data.get('ci_high', 80) - data.get('ci_low', 20)
+            if ci_width > 25:
+                score += 10.0
+            elif ci_width > 15:
+                score += 5.0
+            
+            if comp not in recent_comps:
+                score += 8.0
+            
+            items_count = data.get('items_count', 0)
+            if items_count < 2:
+                score += 12.0
+            elif items_count < 4:
+                score += 6.0
+            
+            # Cluster-based bonus/penalty
+            if current_cluster:
+                if should_switch:
+                    # Bonus for different cluster
+                    if comp_cluster != current_cluster:
+                        score += 15.0
+                        logger.info(f"[CLUSTERING] {comp} gets switch bonus ({comp_cluster} != {current_cluster})")
+                else:
+                    # Bonus for same cluster (maintain coherence)
+                    if comp_cluster == current_cluster:
+                        score += 12.0
+                        logger.info(f"[CLUSTERING] {comp} gets coherence bonus ({comp_cluster} == {current_cluster})")
+            
+            comp_scores.append((score, comp))
+        
+        if comp_scores:
+            comp_scores.sort(reverse=True)
+            top_comp = comp_scores[0][1]
+            logger.info(f"[CLUSTERING] Selected: {top_comp} (cluster: {self.validator.get_thematic_cluster(top_comp)})")
+            return top_comp
+        
+        # Fallback
+        return list(proficiency.keys())[0] if proficiency else "Fundamentos de IA/ML & LLMs"
+    
+    def _adapt_difficulty_based_on_performance(
+        self,
+        base_difficulty: str,
+        difficulty_analysis: Dict[str, Any]
+    ) -> str:
+        """
+        Adjust difficulty based on recent performance patterns.
+        """
+        recommendation = difficulty_analysis.get('recommendation', 'same')
+        
+        difficulty_levels = ['easy', 'medium', 'hard']
+        current_index = difficulty_levels.index(base_difficulty)
+        
+        if recommendation == 'harder' and current_index < 2:
+            adapted = difficulty_levels[current_index + 1]
+            logger.info(f"[ADAPTATION] Increasing difficulty: {base_difficulty} → {adapted}")
+            return adapted
+        elif recommendation == 'easier' and current_index > 0:
+            adapted = difficulty_levels[current_index - 1]
+            logger.info(f"[ADAPTATION] Decreasing difficulty: {base_difficulty} → {adapted}")
+            return adapted
+        else:
+            logger.info(f"[ADAPTATION] Maintaining difficulty: {base_difficulty}")
+            return base_difficulty
     
     def _determine_difficulty(self, comp_data: Dict[str, Any]) -> str:
         """

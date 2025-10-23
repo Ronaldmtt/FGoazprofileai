@@ -72,12 +72,13 @@ class AgentGenerator:
             'hard': 'Perguntas para especialistas que dominam IA profundamente'
         }
         
-        prompt = f"""Você é um especialista em criar avaliações PRÁTICAS de uso de IA no trabalho.
+        prompt = f"""Você é um especialista em criar avaliações DESAFIADORAS de uso de IA no trabalho.
 
 CONTEXTO DA AVALIAÇÃO:
-- **Objetivo**: Identificar o nível de conhecimento em IA dos colaboradores da OAZ
+- **Objetivo**: Identificar com PRECISÃO o nível de conhecimento em IA dos colaboradores da OAZ
 - **Público**: Todos os funcionários (desde quem nunca usou IA até especialistas)
 - **Finalidade**: Direcionar pessoas para treinamentos adequados ao seu nível
+- **CRÍTICO**: As alternativas devem ser SUTIS e AMBÍGUAS, não óbvias
 
 DADOS DO USUÁRIO:
 - Competência avaliada: {competency}
@@ -95,43 +96,90 @@ INSTRUÇÕES PARA CRIAR A PERGUNTA:
    - Foque em "como fazer" ou "o que usar"
 
 2. **EXEMPLOS DE PERGUNTAS BOAS**:
-   - "Você precisa resumir 50 páginas de um relatório. Qual ferramenta de IA é mais adequada?"
-   - "Sua equipe quer automatizar respostas a emails comuns. Qual a melhor opção?"
-   - "Você precisa criar uma apresentação sobre vendas. Como a IA pode ajudar?"
-   - "Um cliente pergunta sobre privacidade ao usar ChatGPT. O que é verdade?"
+   - "Você precisa resumir 50 páginas de um relatório. Qual abordagem é mais eficiente?"
+   - "Sua equipe quer automatizar respostas a emails comuns. O que considerar primeiro?"
+   - "Você precisa criar uma apresentação sobre vendas. Qual estratégia funciona melhor?"
+   - "Um cliente pergunta sobre privacidade ao usar ChatGPT. Qual afirmação está correta?"
 
 3. **DIFICULDADE POR NÍVEL**:
-   - **Básico**: Pergunte sobre ferramentas conhecidas (ChatGPT, Copilot), usos simples
-   - **Intermediário**: Cenários de trabalho comuns, escolha entre ferramentas
-   - **Avançado**: Otimização, boas práticas, limitações técnicas
+   - **Básico**: Situações simples de uso de IA, mas com opções que se sobrepõem
+   - **Intermediário**: Cenários que exigem escolha entre opções TODAS plausíveis
+   - **Avançado**: Casos com nuances técnicas, limitações e trade-offs sutis
 
-4. **AS 4 ALTERNATIVAS DEVEM SER**:
-   - Claras e diretas
-   - Relacionadas ao contexto de trabalho
-   - Plausíveis (evite opções obviamente erradas)
-   - Sem jargões técnicos complexos
+4. **ALTERNATIVAS - REGRAS CRÍTICAS DE AMBIGUIDADE**:
 
-5. **NÃO FAÇA**:
-   ❌ Perguntas muito técnicas sobre algoritmos ou matemática
-   ❌ Termos complexos que só especialistas conhecem
-   ❌ Perguntas teóricas sem aplicação prática
-   ❌ Sempre começar com "Você deseja implementar..."
+   ⚠️ **ATENÇÃO MÁXIMA**: Este é o ponto mais importante!
+
+   **TODAS as 4 alternativas DEVEM**:
+   ✓ Parecer plausíveis à primeira vista
+   ✓ Conter elementos parcialmente corretos (exceto a incorreta óbvia)
+   ✓ Usar linguagem similar entre si (mesmo nível de formalidade)
+   ✓ Ter comprimento similar (evite uma muito longa e outras curtas)
+
+   **Técnicas para criar AMBIGUIDADE**:
+   
+   a) **Misture verdades parciais**:
+      - Opção correta: "Use ChatGPT com contexto específico e valide as informações"
+      - Distrator bom: "Use ChatGPT diretamente, pois sempre fornece dados corretos" (parcialmente correto, mas falha na validação)
+      - Distrator ruim: "Nunca use IA para isso" (muito óbvio)
+
+   b) **Crie trade-offs sutis**:
+      - Todas opções funcionam, mas UMA é MELHOR para o contexto específico
+      - Exemplo: diferentes ferramentas que resolvem, mas uma é mais adequada
+
+   c) **Simule erros comuns de humanos**:
+      - Inclua misconceptions frequentes
+      - Exemplo: "IA sempre precisa de internet" vs "IA pode funcionar offline em alguns casos"
+
+   d) **Use qualificadores sutis**:
+      - "sempre", "nunca", "na maioria dos casos", "geralmente"
+      - A diferença entre correto/incorreto está NO QUALIFICADOR
+
+   e) **Sobreponha conceitos**:
+      - Opções que misturam ferramentas/conceitos relacionados
+      - Exemplo: ChatGPT vs Copilot vs Gemini - todos são LLMs, mas têm usos diferentes
+
+   **EXEMPLO DE ALTERNATIVAS BEM CONSTRUÍDAS**:
+   
+   Pergunta: "Você precisa analisar sentimento de 1000 reviews de clientes. Qual abordagem é mais eficiente?"
+   
+   A) Usar ChatGPT copiando reviews em lotes de 50, pedindo análise estruturada ✓ CORRETA
+   B) Usar ChatGPT copiando todos os 1000 reviews de uma vez para análise completa (parece certo, mas excede limite de contexto)
+   C) Ler manualmente para entender nuances, depois usar IA para confirmar (muito lento, mas não está errado)
+   D) Usar Google Sheets com fórmulas de análise de texto nativas (tecnicamente possível, mas limitado)
+
+   ❌ **EVITE CRIAR**:
+   - Opções obviamente absurdas: "Use uma máquina de escrever"
+   - Opções muito técnicas: "Implemente um transformer BERT com fine-tuning"
+   - Opções que ninguém consideraria: "Contrate 100 pessoas"
+
+5. **DISTRIBUIÇÃO DAS ALTERNATIVAS**:
+   - 1 claramente correta (mas não óbvia)
+   - 2 parcialmente corretas com falhas sutis
+   - 1 plausível mas inadequada ao contexto
+
+6. **NÃO FAÇA**:
+   ❌ Alternativas com comprimentos muito diferentes
+   ❌ Uma opção muito técnica e outras muito simples
+   ❌ Opções que se contradizem completamente (fica óbvio)
+   ❌ Usar sempre a mesma posição para resposta correta (varie A/B/C/D)
 
 RETORNE JSON:
 {{
   "stem": "Pergunta DIRETA sobre uso prático de IA no trabalho",
   "choices": [
-    "A) Primeira opção prática",
-    "B) Segunda opção prática", 
-    "C) Terceira opção prática",
-    "D) Quarta opção prática"
+    "A) Primeira opção (sutil, plausível, parcialmente correta)",
+    "B) Segunda opção (sutil, plausível, parcialmente correta)", 
+    "C) Terceira opção (CORRETA mas não óbvia)",
+    "D) Quarta opção (plausível mas com limitação clara ao analisar)"
   ],
-  "answer_key": "A/B/C/D",
-  "explanation": "Explicação simples e clara do porquê",
-  "rubric_criteria": {{"uso_pratico": "sabe usar IA no trabalho", "conhecimento": "entende quando aplicar"}}
+  "answer_key": "A/B/C/D (varie a posição!)",
+  "explanation": "Explicação que mostre POR QUE as outras opções, apesar de plausíveis, não são ideais",
+  "rubric_criteria": {{"uso_pratico": "sabe usar IA no trabalho", "conhecimento": "entende quando aplicar"}},
+  "distractor_quality": "Explicação de por que os distratores são sutis e desafiadores"
 }}
 
-LEMBRE-SE: Esta é uma avaliação corporativa para identificar níveis e direcionar treinamentos!"""
+LEMBRE-SE: Se for fácil identificar a resposta correta em 2 segundos, a questão FALHOU! O usuário deve PENSAR e COMPARAR as opções!"""
 
         try:
             # Skip if LLM provider is stub

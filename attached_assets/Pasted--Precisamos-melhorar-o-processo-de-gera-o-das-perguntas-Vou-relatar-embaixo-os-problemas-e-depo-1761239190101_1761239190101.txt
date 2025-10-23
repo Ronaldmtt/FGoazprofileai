@@ -1,0 +1,22 @@
+
+
+
+
+Precisamos melhorar o processo de geração das perguntas. Vou relatar embaixo os problemas e depois como deve funcionar:  🧩 Interpretação do Feedback
+O que Bento quis dizer:
+“As perguntas estavam muito distantes uma da outra. A maioria era muito clara de qual deveria ser a resposta da AI e qual não era.”
+Isso indica três problemas principais no processo atual de geração:
+1. Inconsistência semântica entre perguntas: As perguntas geradas estão variando demais em estilo, contexto ou nível de dificuldade — o que faz o usuário perceber uma falta de unidade no teste.
+2. Baixa calibragem no nível de ambiguidade: Perguntas muito fáceis de identificar como “AI” ou “não AI” indicam que o modelo está gerando exemplos óbvios, não simulando respostas humanas de forma convincente.
+3. Ausência de uma curva de complexidade planejada: O sistema não parece estar adaptando a dificuldade conforme o usuário responde. Isso impede o teste de medir realmente a proficiência.
+
+⚙️ O que precisa ser ajustado no processo da OpenAI
+Aqui estão as mudanças que devem ser feitas no prompt engineering e na lógica de geração:
+1. Adicionar calibragem de distância semântica controlada entre perguntas. → Exemplo: criar uma função que use embeddings para garantir que as perguntas estejam dentro de um intervalo de similaridade (ex: 0.65–0.85 de cosine similarity).
+2. Aumentar a ambiguidade das respostas de IA. → O modelo deve gerar opções onde as respostas de IA e humanas se sobreponham parcialmente, obrigando o usuário a raciocinar mais. → Instrução: “Crie respostas de IA que imitem erros ou sutilezas humanas.”
+3. Introduzir um modelo adaptativo de dificuldade. → Após 3 ou mais respostas, o sistema ajusta o nível das perguntas (usando feedback implícito das respostas certas/erradas).
+4. Diversificar domínios, mantendo coesão temática. → Evitar saltos abruptos entre temas desconexos. → Agrupar por blocos de tema (ex: linguagem, raciocínio, criatividade, ética em IA).
+
+
+
+Consegue verificar profundamente, e se necessário mudar todo o sistema de geração de perguntas para que atenda esses requisitos. 
