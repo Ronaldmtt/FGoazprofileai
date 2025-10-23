@@ -15,26 +15,34 @@
 
     <div class="bg-white rounded-lg shadow-md p-8">
         <div class="mb-6">
+            {% if item.block %}
+            <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full mb-4">
+                {{ item.block }}
+            </span>
+            {% elif item.competency %}
             <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full mb-4">
                 {{ item.competency }}
             </span>
+            {% endif %}
             <p class="text-lg text-gray-900 leading-relaxed">
                 {{ item.stem }}
             </p>
         </div>
 
-        {% if item.type in ['mcq', 'scenario'] %}
+        {% if item.type in ['mcq', 'scenario', 'matrix'] %}
         <div class="space-y-3 mb-6">
             {% for choice in item.choices %}
-            <label class="flex items-start p-4 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+            <label class="flex items-start p-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all group">
                 <input 
                     type="radio" 
                     name="answer" 
                     value="{{ loop.index0 | chr }}"
                     x-model="answer"
-                    class="mt-1"
+                    class="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500"
                 >
-                <span class="ml-3 text-gray-700"><strong>{{ loop.index0 | chr }}.</strong> {{ choice }}</span>
+                <span class="ml-3 text-gray-700 group-hover:text-gray-900">
+                    <strong class="text-blue-600">{{ loop.index0 | chr }}.</strong> {{ choice }}
+                </span>
             </label>
             {% endfor %}
         </div>
