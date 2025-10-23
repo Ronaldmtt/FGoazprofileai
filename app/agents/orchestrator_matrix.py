@@ -253,7 +253,7 @@ class AgentOrchestratorMatrix:
             percentage = (score / max_score * 100) if max_score > 0 else 0
             
             block_details[block_name] = {
-                'display_name': config['display_name'],
+                'display_name': block_name,  # Use block name directly
                 'score': score,
                 'max_score': max_score,
                 'percentage': percentage,
