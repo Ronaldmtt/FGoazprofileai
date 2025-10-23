@@ -8,8 +8,12 @@ class Response(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.Integer, db.ForeignKey('sessions.id'), nullable=False, index=True)
     item_id = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False, index=True)
-    raw_answer = db.Column(db.Text)
-    graded_score_0_1 = db.Column(db.Float)
+    raw_answer = db.Column(db.Text)  # e.g., "a", "b", "c", "d" for matrix
+    
+    # Scoring (dual system)
+    graded_score_0_1 = db.Column(db.Float)  # Legacy IRT: 0-1 score
+    matrix_points = db.Column(db.Integer)  # NEW: Points for matrix (1, 2, 3, or 4)
+    
     rubric_breakdown_json = db.Column(db.Text)
     latency_ms = db.Column(db.Integer)
     ai_flags_json = db.Column(db.Text)

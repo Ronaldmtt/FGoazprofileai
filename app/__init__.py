@@ -43,9 +43,11 @@ def create_app(config_class=Config):
         
         from app.models import user, session as session_model, item, response, snapshot, recommendation, audit
         
+        # Create all tables FIRST with new schema
         db.create_all()
         
-        if app.config['SEED_ON_START']:
+        # THEN seed database (after tables exist)
+        if app.config.get('SEED_ON_START', False):
             from app.core.utils import seed_database
             seed_database()
     
