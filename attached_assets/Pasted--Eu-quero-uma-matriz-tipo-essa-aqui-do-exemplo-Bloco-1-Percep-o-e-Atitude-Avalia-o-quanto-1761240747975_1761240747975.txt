@@ -1,0 +1,41 @@
+
+
+
+
+Eu quero uma matriz tipo essa aqui do exemplo:  🧭 Bloco 1 — Percepção e Atitude
+Avalia o quanto a pessoa compreende e se posiciona diante da IA.
+1. Quando você ouve falar em “Inteligência Artificial”, o que vem à sua cabeça primeiro? a) Algo distante, mais voltado para programadores e cientistas b) Uma tecnologia interessante, mas ainda não sei bem como usar c) Uma ferramenta que já está mudando o meu trabalho d) Um parceiro indispensável — já faz parte da minha rotina
+
+1. Como você definiria o papel da IA no futuro da sua profissão? a) Nenhum — não acredito que vá impactar muito b) Vai mudar algumas tarefas, mas não a essência do meu trabalho c) Vai transformar completamente a forma como trabalho d) Já está transformando — e estou me adaptando a isso
+
+🧰 Bloco 2 — Uso Prático
+Avalia o nível de aplicação real no dia a dia de trabalho.
+1. Com que frequência você usa ferramentas de IA (como ChatGPT, Copilot, Claude, Midjourney, etc.)? a) Nunca usei b) Já testei por curiosidade c) Uso ocasionalmente para algumas tarefas d) Uso frequentemente e integro nos meus fluxos de trabalho
+
+1. Para quais tipos de atividades você já usou IA? (pode escolher mais de uma) □ Buscar ideias ou inspiração □ Redigir textos, e-mails ou apresentações □ Analisar dados ou planilhas □ Criar imagens, vídeos ou sons □ Programar ou automatizar tarefas □ Nunca usei IA
+
+1. Quando você usa IA, o que normalmente faz? a) Peço algo pronto e aceito o resultado b) Ajusto as respostas e faço testes até ficar bom c) Estruturo o pedido (prompt) de forma detalhada e avalio criticamente a saída d) Uso IA para gerar, revisar e integrar resultados em sistemas ou automações
+
+🧠 Bloco 3 — Conhecimento e Entendimento
+Mede o nível de consciência técnica e conceitual.
+1. Você sabe o que é um modelo de linguagem (LLM)? a) Nunca ouvi falar b) Já ouvi, mas não sei explicar c) Tenho uma ideia geral d) Sei explicar e já usei um
+
+1. Você entende a diferença entre IA generativa (como o ChatGPT) e IA preditiva (como sistemas de recomendação)? a) Não sei a diferença b) Tenho uma noção, mas confundo os conceitos c) Sei explicar com exemplos d) Já usei ambas em projetos ou ferramentas
+
+1. Quando você lê ou ouve notícias sobre IA, o que costuma fazer? a) Ignoro — não me interessa muito b) Leio por curiosidade c) Tento entender como aquilo pode afetar meu trabalho d) Pesquiso mais e aplico o que aprendo
+
+🚀 Bloco 4 — Cultura e Autonomia Digital
+Mede a mentalidade de aprendizado e adaptação tecnológica.
+1. Se amanhã surgisse uma nova ferramenta de IA útil para sua área, você… a) Esperaria alguém te ensinar a usar b) Pediria ajuda a um colega c) Testaria por conta própria d) Faria testes, tutoriais e compartilharia com a equipe
+
+1. Como você se sente em relação à IA no seu trabalho? a) Ameaçado — pode substituir o que faço b) Cético — acho que ainda é supervalorizada c) Curioso — quero entender como posso usar d) Empolgado — vejo como uma grande aliada
+
+🎯 Resultados sugeridos
+Após aplicar o questionário, você pode classificar os respondentes conforme a pontuação (1–4 por questão):
+Faixa	Nível de Maturidade	Descrição
+10–17 pts	Iniciante	Conhece superficialmente, pouco uso prático
+18–27 pts	Explorador	Testa ferramentas, entende potencial
+28–35 pts	Praticante	Usa no trabalho, entende conceitos-chave
+36–40 pts	Líder Digital	Integra, ensina e influencia o uso de IA
+Se quiser, posso gerar a versão pronta para Google Forms (ou planilha CSV/Excel) com as alternativas já configuradas e a lógica de pontuação embutida, para você aplicar na empresa.
+  Porem, com perguntas personalizadas pela AI, entende?
