@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, session as flask_session
 from app.models import Item, Session
-from app.agents.orchestrator import AgentOrchestrator
+from app.agents.orchestrator_matrix import AgentOrchestratorMatrix
+from app.core.blocks_config import TOTAL_QUESTIONS
 
 bp = Blueprint('items', __name__, url_prefix='/items')
 
@@ -17,7 +18,7 @@ def require_auth(f):
 @bp.route('/next', methods=['GET'])
 @require_auth
 def next_page():
-    """Render next item page."""
+    """Render next item page (matrix-based)."""
     session_id = flask_session.get('session_id')
     
     if not session_id:
@@ -28,24 +29,24 @@ def next_page():
     if not session or session.status != 'active':
         return redirect(url_for('session.start_page'))
     
-    orchestrator = AgentOrchestrator(session_id)
+    orchestrator = AgentOrchestratorMatrix(session_id)
     
     stop_check = orchestrator.should_stop()
     if stop_check['should_stop']:
-        return redirect(url_for('session.finish_page'))
+        return redirect(url_for('items.finish_page'))
     
     next_item = orchestrator.get_next_item()
     
     if not next_item:
-        # If OpenAI generation failed, show error
         return render_template('error.html',
-            message="Não foi possível gerar a próxima pergunta personalizada. Verifique se a chave da OpenAI está configurada corretamente."
+            message="Não foi possível gerar a próxima pergunta. Verifique se a chave da OpenAI está configurada corretamente."
         )
     
+    progress_info = orchestrator.get_progress()
     progress = {
         'current': orchestrator.state['items_answered'] + 1,
-        'total': 12,
-        'percentage': int((orchestrator.state['items_answered'] / 12) * 100)
+        'total': TOTAL_QUESTIONS,
+        'percentage': int(progress_info['progress_percentage'])
     }
     
     return render_template('item.html',
@@ -56,20 +57,20 @@ def next_page():
 @bp.route('/next', methods=['POST'])
 @require_auth
 def next_api():
-    """API endpoint to get next item (for HTMX)."""
+    """API endpoint to get next item (for HTMX) - matrix-based."""
     session_id = flask_session.get('session_id')
     
     if not session_id:
         return jsonify({'error': 'Nenhuma sessão ativa'}), 400
     
-    orchestrator = AgentOrchestrator(session_id)
+    orchestrator = AgentOrchestratorMatrix(session_id)
     
     stop_check = orchestrator.should_stop()
     if stop_check['should_stop']:
         return jsonify({
             'should_stop': True,
             'reason': stop_check['reason'],
-            'redirect': url_for('session.finish_page')
+            'redirect': url_for('items.finish_page')
         })
     
     next_item = orchestrator.get_next_item()
@@ -77,17 +78,17 @@ def next_api():
     if not next_item:
         return jsonify({
             'error': True,
-            'message': 'Falha na geração de pergunta personalizada pela OpenAI. Verifique a configuração da API key.'
+            'message': 'Falha na geração de pergunta pela OpenAI. Verifique a configuração da API key.'
         }), 500
     
     return jsonify({
         'item_id': next_item.id,
         'stem': next_item.stem,
         'type': next_item.type,
-        'choices': next_item.choices if next_item.type in ['mcq', 'scenario'] else None,
+        'choices': next_item.choices,
         'progress': {
             'current': orchestrator.state['items_answered'] + 1,
-            'total': 12
+            'total': TOTAL_QUESTIONS
         }
     })
 

@@ -2,11 +2,11 @@
 
 ## Overview
 
-OAZ IA Profiler is an adaptive AI proficiency assessment platform that evaluates collaborators' competency in 9 AI domains through an 8-12 minute intelligent questionnaire. The system uses an IRT-lite (Item Response Theory) scoring algorithm to dynamically adjust question difficulty based on user responses, providing personalized proficiency reports and learning recommendations.
+OAZ IA Profiler is an AI maturity assessment platform that evaluates employees' proficiency across 4 key dimensions through a streamlined 10-question assessment. The system uses **100% OpenAI-generated questions** personalized to each user's role and department, with a simplified scoring model (10-40 points) that classifies employees into 4 maturity levels to direct them to appropriate training programs.
 
-The application features a multi-agent ecosystem where specialized agents handle question selection, response grading, proficiency scoring, and recommendation generation. Assessment sessions adapt in real-time, converging on accurate proficiency estimates while minimizing test duration.
+The application features a multi-agent ecosystem where specialized agents handle question generation, response grading, and maturity classification. All questions are generated dynamically via GPT-4o, ensuring relevance and practical focus on real-world AI tool usage.
 
-**Status**: ✅ Production ready (v1.5.0) - Sistema de geração de perguntas aprimorado com validação semântica e ambiguidade controlada
+**Status**: ✅ Production ready (v2.0.0) - Simplified matrix-based assessment with 4-block structure and 100% adaptive question generation
 
 ## User Preferences
 
@@ -28,50 +28,43 @@ Preferred communication style: Simple, everyday language.
 - JWT-style tokens with 24-hour expiration for magic links
 - Comprehensive audit logging for all critical actions
 
-### Multi-Agent Orchestration System
-The application implements an internal agent ecosystem coordinated by `AgentOrchestrator`:
+### Multi-Agent Orchestration System (Matrix-Based)
+The application implements a simplified agent ecosystem coordinated by `AgentOrchestratorMatrix`:
 
-1. **AgentProfiler**: Initializes proficiency baseline from initial response (P0 question)
-2. **AgentSelector**: **100% adaptive generation with semantic validation** - all questions generated via OpenAI based on user context (name, role, department) and performance, with:
-   - **Semantic distance control** (0.65-0.85 cosine similarity between consecutive questions)
-   - **Thematic clustering** to avoid jarring topic jumps between competencies
-   - **Progressive difficulty adaptation** based on performance patterns (3+ responses)
-   - **Quality validation** with retry logic (up to 3 attempts)
-3. **AgentGrader**: Grades MCQ (deterministic) and open-ended responses using **GPT-4o semantic analysis** for intelligent rubric-based evaluation
-4. **AgentScorer**: Updates competency scores using **corrected IRT algorithm** with proper theta scale conversion (-3 to +3) and Bayesian updates
-5. **AgentRecommender**: Generates personalized learning tracks based on proficiency gaps
-6. **AgentGenerator**: **Dynamically creates challenging, ambiguous questions** using GPT-4o with:
+1. **AgentSelectorMatrix**: Manages question distribution across 4 blocks with predetermined counts (10 questions total)
+2. **AgentGenerator**: **100% dynamic question generation** using GPT-4o with:
+   - **Personalization**: Questions adapted to user's name, role, and department
+   - **Progressive difficulty**: Choices A/B/C/D represent increasing maturity levels (1-4 points)
+   - **Practical focus**: Questions about real-world AI tool usage and scenarios
    - **Enhanced prompts** for creating subtle, overlapping alternatives (not obvious correct answers)
-   - **Distractor quality control** - options are plausible and partially correct
+   - **Distractor quality control** - options are plausible and represent different maturity levels
    - **Length balance** - all choices have similar length (±30% variance)
-   - Perguntas práticas focadas no uso real de IA no trabalho
-7. **AgentContentQA**: Validates new assessment items for quality assurance
-8. **SemanticValidator** (NEW): Advanced validation system ensuring:
-   - Semantic coherence between consecutive questions
-   - Appropriate difficulty progression
-   - Thematic cluster management
-   - Question quality scoring (ambiguity, balance, clarity)
+3. **AgentGraderMatrix**: Simple deterministic grading mapping A=1, B=2, C=3, D=4 points
+4. **SemanticValidator**: Quality assurance for generated questions (optional, can be enabled for stricter validation)
 
-Each agent maintains separation of concerns while the orchestrator coordinates state management and decision flow.
+Each agent maintains separation of concerns while the orchestrator coordinates state management and scoring flow.
 
-### Adaptive Assessment Algorithm (IRT with Theta Scale)
-- **Proficiency tracking** per competency (0-100 scale displayed, theta -3 to +3 internally) with confidence intervals
-- **Dynamic difficulty adjustment** using proper IRT logistic model: P(correct) = 1/(1 + exp(-a*(theta - b)))
-- **Enhanced discrimination**: Item discrimination clamped to minimum 1.0, ensuring strong separation between correct/incorrect
-- **Optimized learning rate**: 1.0 multiplier (up from 0.3) for rapid convergence and clear differentiation
-- Item parameters: difficulty_b (-1.0 to +1.5), discrimination_a (1.5 to 2.2)
-- **Adaptive difficulty routing**: easy (score <40), medium (40-70), hard (>70)
-- **Convergence criteria**: minimum 8 items, maximum 12 items, CI ≤ 12 points on 6+ competencies, or 12-minute timeout
-- **Clear level separation**: N0 (<20), N1 (20-39), N2 (40-59), N3 (60-74), N4 (75-87), N5 (88+)
+### Simplified Matrix Assessment Algorithm
+- **4-Block Structure** (`blocks_config.py`):
+  1. **Percepção e Atitude** (3 questions): Awareness and attitude toward AI
+  2. **Uso Prático** (3 questions): Practical use of AI tools in daily work
+  3. **Conhecimento e Entendimento** (2 questions): Technical understanding of AI concepts
+  4. **Cultura e Autonomia Digital** (2 questions): Digital culture and autonomy
+- **Simple Scoring**: Each question has 4 choices (A/B/C/D) = 1/2/3/4 points representing progressive maturity
+- **Total Score Range**: 10-40 points (10 questions × 4 max points)
+- **4 Maturity Levels**:
+  1. **Iniciante** (10-17 pts): Beginning AI journey, basic awareness
+  2. **Explorador** (18-27 pts): Occasional AI use, understanding benefits
+  3. **Praticante** (28-35 pts): Daily AI use, technical understanding
+  4. **Líder Digital** (36-40 pts): AI reference, strategic thinking, cultural transformation
 
 ### Data Models
-Database schema implemented with SQLAlchemy models:
+Database schema implemented with SQLAlchemy models (matrix-based):
 - **User**: email, name, department, role, consent timestamp
 - **Session**: assessment sessions with status tracking (active/completed)
-- **Item**: question bank with stem, type, competency, IRT parameters, choices, rubrics
-- **Response**: user answers with grading scores, latency, AI flags
-- **ProficiencySnapshot**: per-competency scores with confidence intervals
-- **Recommendation**: learning tracks generated post-assessment
+- **Item**: dynamically generated questions with stem, block (instead of competency), progressive_levels flag, choices
+- **Response**: user answers with matrix_points (1-4), graded_score_0_1 (normalized)
+- **ProficiencySnapshot**: total raw_score (10-40), maturity_level, block_scores (JSON)
 - **Audit**: comprehensive action logging for compliance
 
 ### Frontend Architecture
@@ -82,37 +75,33 @@ Database schema implemented with SQLAlchemy models:
 - Real-time progress tracking and form validation
 
 ### Assessment Content Management
-- **Seed database** with 36+ pre-validated assessment items on startup
-- Four question types: MCQ, scenario-based, prompt writing, open-ended
-- 9 competency domains covering fundamentals, tools, ethics, automation, LLMOps, etc.
-- Rubric-based grading for subjective responses with multi-dimensional scoring
+- **100% dynamic generation**: No pre-seeded questions - all generated on-demand via OpenAI
+- **Personalization**: Each question tailored to user's role and department
+- **4 question blocks**: Distributed across Percepção, Uso Prático, Conhecimento, Cultura
+- **Progressive choice design**: Options A/B/C/D represent increasing maturity (1-4 points)
 
 ### Scoring & Reporting
-- **Global proficiency score** calculated as weighted average across competencies
-- **Level classification** (N0-N5) with threshold-based categorization
-- Competency heatmaps showing strengths and gaps
+- **Simple additive scoring**: Sum of points across 10 questions (10-40 range)
+- **Maturity level classification**: 4 levels (Iniciante, Explorador, Praticante, Líder Digital)
+- **Block breakdown**: Performance visualization per block
+- **Training direction**: Results used to direct employees to appropriate AI training programs
 - Time-spent tracking and response latency analysis
 - CSV/XLSX export capabilities for administrative reporting
 
 ### LLM Integration Layer
-Abstraction through `LLMProvider` class with **full OpenAI integration** (GPT-4o):
-- **100% adaptive question generation with quality control**: 
-  - Perguntas desafiadoras com alternativas ambíguas e sutis
-  - Validação automática de qualidade (score mínimo 60/100)
-  - Controle de similaridade semântica entre perguntas consecutivas
-  - Retry logic (3 tentativas) para garantir qualidade
-- **Advanced prompt engineering**:
-  - Distratores plausíveis que misturam verdades parciais
-  - Todas as opções com comprimento similar (evita pistas visuais)
-  - Trade-offs sutis entre alternativas (todas funcionam, mas uma é melhor)
-  - Simula erros comuns humanos e misconceptions
-- **Foco no uso real de IA**: Perguntas sobre ferramentas e situações práticas do dia a dia de trabalho
-- **Adequado para todos os níveis**: Desde colaboradores que nunca usaram IA até especialistas avançados
-- **Objetivo corporativo**: Identificar com PRECISÃO os níveis de conhecimento para direcionar treinamentos
-- **Semantic response evaluation**: Intelligent rubric-based grading for open-ended responses with detailed feedback
-- **Content moderation**: Safety checks using OpenAI moderation API
-- **Embeddings API**: text-embedding-3-small for semantic distance calculation
+**100% OpenAI-powered** question generation and quality control via `LLMProvider` class:
+- **Dynamic question generation** (`generate_matrix_question`):
+  - **Personalization**: Uses user name, role, department for context-aware questions
+  - **Progressive maturity design**: Choices A/B/C/D represent 1/2/3/4 maturity levels
+  - **Practical focus**: Questions about real-world AI tool usage scenarios
+  - **Quality prompts**: Enhanced prompts for subtle, overlapping alternatives (no obvious answers)
+  - **Distractor control**: Options are plausible and represent different maturity stages
+  - **Length balance**: All choices similar length (±30% variance)
+- **Block-specific generation**: Questions tailored to each of the 4 blocks (Percepção, Uso Prático, Conhecimento, Cultura)
+- **Retry logic**: Up to 3 generation attempts if quality validation fails
+- **Embeddings API**: text-embedding-3-small for semantic distance validation (optional)
 - Uses GPT-4o model with JSON structured outputs for reliability and proper `max_completion_tokens` parameter
+- **Corporate focus**: Questions designed to identify precise maturity levels for training direction
 
 ## External Dependencies
 

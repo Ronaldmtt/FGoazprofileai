@@ -70,6 +70,9 @@ SCORING = {
 MATURITY_LEVELS = {
     "Iniciante": {
         "range": (10, 17),
+        "min_score": 10,
+        "max_score": 17,
+        "display_name": "Iniciante",
         "emoji": "🌱",
         "color": "#E5E7EB",
         "description": "Conhece superficialmente, pouco uso prático",
@@ -87,6 +90,9 @@ MATURITY_LEVELS = {
     },
     "Explorador": {
         "range": (18, 27),
+        "min_score": 18,
+        "max_score": 27,
+        "display_name": "Explorador",
         "emoji": "🔍",
         "color": "#DBEAFE",
         "description": "Testa ferramentas, entende potencial",
@@ -104,6 +110,9 @@ MATURITY_LEVELS = {
     },
     "Praticante": {
         "range": (28, 35),
+        "min_score": 28,
+        "max_score": 35,
+        "display_name": "Praticante",
         "emoji": "⚡",
         "color": "#D1FAE5",
         "description": "Usa no trabalho, entende conceitos-chave",
@@ -121,6 +130,9 @@ MATURITY_LEVELS = {
     },
     "Líder Digital": {
         "range": (36, 40),
+        "min_score": 36,
+        "max_score": 40,
+        "display_name": "Líder Digital",
         "emoji": "🏆",
         "color": "#FDE68A",
         "description": "Integra, ensina e influencia o uso de IA",

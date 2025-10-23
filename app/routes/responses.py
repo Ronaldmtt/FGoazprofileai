@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session as flask_session
 from app.models import Session
-from app.agents.orchestrator import AgentOrchestrator
+from app.agents.orchestrator_matrix import AgentOrchestratorMatrix
 from app.core.security import sanitize_input
 
 bp = Blueprint('responses', __name__, url_prefix='/responses')
@@ -18,7 +18,7 @@ def require_auth(f):
 @bp.route('/', methods=['POST'])
 @require_auth
 def submit():
-    """Submit response to current item."""
+    """Submit response to current item (matrix-based)."""
     session_id = flask_session.get('session_id')
     
     if not session_id:
@@ -37,7 +37,7 @@ def submit():
     if not item_id or not answer:
         return jsonify({'error': 'Item ID e resposta são obrigatórios'}), 400
     
-    orchestrator = AgentOrchestrator(session_id)
+    orchestrator = AgentOrchestratorMatrix(session_id)
     
     result = orchestrator.process_response(item_id, answer, latency_ms)
     
@@ -45,7 +45,8 @@ def submit():
     
     return jsonify({
         'success': True,
-        'score': result['score'],
+        'points': result['points'],
+        'total_score': result['total_score'],
         'items_answered': result['items_answered'],
         'should_stop': stop_check['should_stop'],
         'stop_reason': stop_check['reason'],

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Seu Resultado - OAZ IA Profiler{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-8 mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Parabéns!</h2>
+        <p class="text-gray-600 mb-6">
+            Você concluiu a avaliação de maturidade em IA.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-blue-50 rounded-lg p-6 text-center">
+                <p class="text-sm text-gray-600 mb-2">Nível de Maturidade</p>
+                <p class="text-2xl font-bold text-blue-600">{{ maturity_level }}</p>
+            </div>
+            
+            <div class="bg-green-50 rounded-lg p-6 text-center">
+                <p class="text-sm text-gray-600 mb-2">Pontuação Total</p>
+                <p class="text-4xl font-bold text-green-600">{{ total_score }}/40</p>
+            </div>
+            
+            <div class="bg-purple-50 rounded-lg p-6 text-center">
+                <p class="text-sm text-gray-600 mb-2">Tempo Gasto</p>
+                <p class="text-4xl font-bold text-purple-600">{{ (assessment_session.time_spent_s // 60) }}min</p>
+            </div>
+        </div>
+
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">Desempenho por Bloco</h3>
+        
+        <div class="space-y-4 mb-8">
+            {% if block_scores %}
+                {% for block_name, score in block_scores.items() %}
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium text-gray-700">{{ block_name }}</span>
+                        <span class="text-sm text-gray-600">{{ score }} pontos</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        {% set max_score = 12 if block_name in ['Percepção e Atitude', 'Uso Prático'] else 8 %}
+                        {% set percentage = (score / max_score * 100)|int %}
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ percentage }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <h4 class="font-semibold text-gray-900 mb-3">Sobre seu nível de maturidade:</h4>
+            
+            {% if maturity_level == 'Iniciante' %}
+            <p class="text-gray-700 mb-3">
+                <strong class="text-blue-600">Iniciante (10-17 pontos):</strong> Você está começando sua jornada com IA. 
+                Tem consciência básica sobre ferramentas de IA, mas ainda não as utiliza regularmente no trabalho.
+            </p>
+            <p class="text-sm text-gray-600">
+                <strong>Recomendação:</strong> Participe de workshops introdutórios sobre ferramentas de IA e comece a experimentar 
+                assistentes como ChatGPT em tarefas simples do dia a dia.
+            </p>
+            
+            {% elif maturity_level == 'Explorador' %}
+            <p class="text-gray-700 mb-3">
+                <strong class="text-green-600">Explorador (18-27 pontos):</strong> Você já utiliza ferramentas de IA ocasionalmente 
+                e compreende seus benefícios básicos, mas ainda há espaço para aprofundamento.
+            </p>
+            <p class="text-sm text-gray-600">
+                <strong>Recomendação:</strong> Explore casos de uso mais avançados, aprenda técnicas de prompt engineering e 
+                experimente diferentes ferramentas de IA para sua área.
+            </p>
+            
+            {% elif maturity_level == 'Praticante' %}
+            <p class="text-gray-700 mb-3">
+                <strong class="text-purple-600">Praticante (28-35 pontos):</strong> Você domina o uso prático de IA no trabalho, 
+                entende conceitos técnicos e já incorporou ferramentas no seu fluxo diário.
+            </p>
+            <p class="text-sm text-gray-600">
+                <strong>Recomendação:</strong> Torne-se multiplicador de conhecimento, compartilhe boas práticas com colegas e 
+                explore aplicações estratégicas de IA no seu departamento.
+            </p>
+            
+            {% elif maturity_level == 'Líder Digital' %}
+            <p class="text-gray-700 mb-3">
+                <strong class="text-orange-600">Líder Digital (36-40 pontos):</strong> Você é referência em IA na organização! 
+                Domina ferramentas, conceitos técnicos, ética e já pensa em transformação cultural.
+            </p>
+            <p class="text-sm text-gray-600">
+                <strong>Recomendação:</strong> Lidere iniciativas de adoção de IA, mentore colegas e contribua para a estratégia 
+                de transformação digital da OAZ.
+            </p>
+            {% endif %}
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-600 mb-4">
+                Seus resultados foram salvos e podem ser acessados pelo RH e inovAI.lab para direcionamento de treinamentos.
+            </p>
+            <a href="/session/start" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                ← Voltar ao início
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
