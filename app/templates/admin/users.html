@@ -55,12 +55,10 @@
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 >
                     <option value="">Todos os níveis</option>
-                    <option value="N0">N0 - Iniciante</option>
-                    <option value="N1">N1 - Básico</option>
-                    <option value="N2">N2 - Intermediário</option>
-                    <option value="N3">N3 - Avançado</option>
-                    <option value="N4">N4 - Especialista</option>
-                    <option value="N5">N5 - Mestre</option>
+                    <option value="Iniciante">Iniciante</option>
+                    <option value="Explorador">Explorador</option>
+                    <option value="Praticante">Praticante</option>
+                    <option value="Líder Digital">Líder Digital</option>
                     <option value="Pendente">Pendente</option>
                 </select>
             </div>
@@ -127,14 +125,14 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-semibold" 
-                                 :class="user.global_score ? getScoreColor(user.global_score) : 'text-gray-400'"
-                                 x-text="user.global_score ? user.global_score : '-'">
+                                 :class="user.raw_score ? getScoreColor(user.raw_score) : 'text-gray-400'"
+                                 x-text="user.raw_score ? user.raw_score + '/40' : '-'">
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                  :class="getLevelColor(user.global_level)"
-                                  x-text="user.global_level">
+                                  :class="getLevelColor(user.maturity_level)"
+                                  x-text="user.maturity_level">
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -194,32 +192,32 @@
                                 <p class="font-medium" x-text="selectedUser.role"></p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Nota Global</p>
+                                <p class="text-sm text-gray-600">Pontuação Total</p>
                                 <p class="text-2xl font-bold" 
-                                   :class="getScoreColor(selectedUser.global_score)"
-                                   x-text="selectedUser.global_score || '-'"></p>
+                                   :class="getScoreColor(selectedUser.raw_score)"
+                                   x-text="selectedUser.raw_score ? selectedUser.raw_score + '/40' : '-'"></p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">Nível</p>
+                                <p class="text-sm text-gray-600">Nível de Maturidade</p>
                                 <span class="inline-block px-3 py-1 text-sm font-semibold rounded-full"
-                                      :class="getLevelColor(selectedUser.global_level)"
-                                      x-text="selectedUser.global_level"></span>
+                                      :class="getLevelColor(selectedUser.maturity_level)"
+                                      x-text="selectedUser.maturity_level"></span>
                             </div>
                         </div>
 
-                        <!-- Competency Scores -->
+                        <!-- Block Scores -->
                         <div x-show="userDetails?.sessions && userDetails.sessions.length > 0">
-                            <h4 class="text-lg font-semibold mb-4">Pontuação por Competência</h4>
-                            <template x-if="userDetails?.sessions[0]?.competency_scores">
+                            <h4 class="text-lg font-semibold mb-4">Pontuação por Bloco</h4>
+                            <template x-if="userDetails?.sessions[0]?.block_scores">
                                 <div class="space-y-3">
-                                    <template x-for="(score, comp) in userDetails.sessions[0].competency_scores" :key="comp">
+                                    <template x-for="(score, block) in userDetails.sessions[0].block_scores" :key="block">
                                         <div>
                                             <div class="flex justify-between mb-1">
-                                                <span class="text-sm font-medium text-gray-700" x-text="comp"></span>
-                                                <span class="text-sm font-semibold" x-text="score.toFixed(1)"></span>
+                                                <span class="text-sm font-medium text-gray-700" x-text="block"></span>
+                                                <span class="text-sm font-semibold" x-text="score + ' pts'"></span>
                                             </div>
                                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                                <div class="bg-blue-600 h-2 rounded-full" :style="'width: ' + score + '%'"></div>
+                                                <div class="bg-blue-600 h-2 rounded-full" :style="'width: ' + (score / 12 * 100) + '%'"></div>
                                             </div>
                                         </div>
                                     </template>
@@ -264,16 +262,16 @@ function usersPage() {
             
             // Level filter
             if (this.filterLevel) {
-                filtered = filtered.filter(u => u.global_level === this.filterLevel);
+                filtered = filtered.filter(u => u.maturity_level === this.filterLevel);
             }
             
             // Sort
             filtered.sort((a, b) => {
                 switch (this.sortBy) {
                     case 'score_desc':
-                        return (b.global_score || 0) - (a.global_score || 0);
+                        return (b.raw_score || 0) - (a.raw_score || 0);
                     case 'score_asc':
-                        return (a.global_score || 0) - (b.global_score || 0);
+                        return (a.raw_score || 0) - (b.raw_score || 0);
                     case 'name':
                         return a.name.localeCompare(b.name);
                     case 'date':
@@ -287,13 +285,13 @@ function usersPage() {
         },
         
         get completedCount() {
-            return this.users.filter(u => u.global_score !== null).length;
+            return this.users.filter(u => u.raw_score !== null).length;
         },
         
         get averageScore() {
-            const completed = this.users.filter(u => u.global_score !== null);
+            const completed = this.users.filter(u => u.raw_score !== null);
             if (completed.length === 0) return 0;
-            const sum = completed.reduce((acc, u) => acc + u.global_score, 0);
+            const sum = completed.reduce((acc, u) => acc + u.raw_score, 0);
             return sum / completed.length;
         },
         
@@ -318,23 +316,23 @@ function usersPage() {
         },
         
         getScoreColor(score) {
-            if (score >= 90) return 'text-purple-600';
-            if (score >= 75) return 'text-green-600';
-            if (score >= 60) return 'text-blue-600';
-            if (score >= 45) return 'text-yellow-600';
-            if (score >= 30) return 'text-orange-600';
-            return 'text-red-600';
+            // Score range is 10-40
+            if (score >= 36) return 'text-purple-600';  // Líder Digital
+            if (score >= 28) return 'text-green-600';   // Praticante
+            if (score >= 18) return 'text-blue-600';    // Explorador
+            if (score >= 10) return 'text-orange-600';  // Iniciante
+            return 'text-gray-400';
         },
         
         getLevelColor(level) {
             const colors = {
-                'N5': 'bg-purple-100 text-purple-800',
-                'N4': 'bg-green-100 text-green-800',
-                'N3': 'bg-blue-100 text-blue-800',
-                'N2': 'bg-yellow-100 text-yellow-800',
-                'N1': 'bg-orange-100 text-orange-800',
-                'N0': 'bg-red-100 text-red-800',
-                'Pendente': 'bg-gray-100 text-gray-800'
+                'Líder Digital': 'bg-purple-100 text-purple-800',
+                'Praticante': 'bg-green-100 text-green-800',
+                'Explorador': 'bg-blue-100 text-blue-800',
+                'Iniciante': 'bg-orange-100 text-orange-800',
+                'Pendente': 'bg-gray-100 text-gray-800',
+                'Sem dados': 'bg-gray-100 text-gray-800',
+                'N/A': 'bg-gray-100 text-gray-800'
             };
             return colors[level] || 'bg-gray-100 text-gray-800';
         },

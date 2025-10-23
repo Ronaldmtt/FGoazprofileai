@@ -71,27 +71,25 @@ def dashboard():
 @bp.route('/overview', methods=['GET'])
 @require_admin
 def overview():
-    """Get overview metrics for dashboard."""
+    """Get overview metrics for dashboard (matrix-based)."""
     total_users = User.query.count()
     total_sessions = Session.query.count()
     completed_sessions = Session.query.filter_by(status='completed').count()
     active_sessions = Session.query.filter_by(status='active').count()
     
-    irt = IRTScorer()
+    # NEW: Use matrix maturity levels
+    level_distribution = {
+        'Iniciante': 0,
+        'Explorador': 0,
+        'Praticante': 0,
+        'Líder Digital': 0
+    }
     
-    level_distribution = {}
-    for level in ['N0', 'N1', 'N2', 'N3', 'N4', 'N5']:
-        level_distribution[level] = 0
-    
-    completed_session_ids = [s.id for s in Session.query.filter_by(status='completed').all()]
-    
-    for session_id in completed_session_ids:
-        snapshots = ProficiencySnapshot.query.filter_by(session_id=session_id).all()
-        if snapshots:
-            scores = {s.competency: s.score_0_100 for s in snapshots}
-            global_score = irt.calculate_global_score(scores)
-            level = irt.calculate_level(global_score)
-            level_distribution[level] += 1
+    # Get maturity level distribution from snapshots
+    snapshots = ProficiencySnapshot.query.all()
+    for snapshot in snapshots:
+        if snapshot.maturity_level and snapshot.maturity_level in level_distribution:
+            level_distribution[snapshot.maturity_level] += 1
     
     participation_rate = (completed_sessions / total_users * 100) if total_users > 0 else 0
     
@@ -107,29 +105,40 @@ def overview():
 @bp.route('/heatmap', methods=['GET'])
 @require_admin
 def heatmap():
-    """Get competency heatmap data."""
+    """Get block heatmap data (matrix-based)."""
+    from app.core.blocks_config import BLOCKS
+    
     group_by = request.args.get('group_by', 'all')
     
-    from config import Config
-    
-    competency_stats = {}
-    for comp in Config.COMPETENCIES:
-        competency_stats[comp] = {
-            'avg_score': 0,
-            'count': 0
-        }
-    
     if group_by == 'all':
-        for comp in Config.COMPETENCIES:
-            snapshots = ProficiencySnapshot.query.filter_by(competency=comp).all()
-            if snapshots:
-                avg = sum(s.score_0_100 for s in snapshots) / len(snapshots)
-                competency_stats[comp] = {
-                    'avg_score': round(avg, 1),
-                    'count': len(snapshots)
+        # Get average scores per block across all users
+        block_stats = {}
+        
+        for block_name in BLOCKS.keys():
+            # Get all snapshots and calculate average score for this block
+            snapshots = ProficiencySnapshot.query.all()
+            block_scores = []
+            
+            for snapshot in snapshots:
+                if snapshot.block_scores and block_name in snapshot.block_scores:
+                    block_scores.append(snapshot.block_scores[block_name])
+            
+            if block_scores:
+                avg_score = sum(block_scores) / len(block_scores)
+                block_stats[block_name] = {
+                    'avg_score': round(avg_score, 1),
+                    'count': len(block_scores)
                 }
+            else:
+                block_stats[block_name] = {
+                    'avg_score': 0,
+                    'count': 0
+                }
+        
+        return jsonify(block_stats)
     
     elif group_by == 'department':
+        # Get scores grouped by department
         departments = db.session.query(User.department).distinct().all()
         department_data = {}
         
@@ -144,21 +153,24 @@ def heatmap():
                 Session.status == 'completed'
             ).all()]
             
-            for comp in Config.COMPETENCIES:
-                snapshots = ProficiencySnapshot.query.filter(
-                    ProficiencySnapshot.session_id.in_(session_ids),
-                    ProficiencySnapshot.competency == comp
-                ).all()
+            snapshots = ProficiencySnapshot.query.filter(
+                ProficiencySnapshot.session_id.in_(session_ids)
+            ).all()
+            
+            for block_name in BLOCKS.keys():
+                block_scores = []
+                for snapshot in snapshots:
+                    if snapshot.block_scores and block_name in snapshot.block_scores:
+                        block_scores.append(snapshot.block_scores[block_name])
                 
-                if snapshots:
-                    avg = sum(s.score_0_100 for s in snapshots) / len(snapshots)
-                    department_data[dept][comp] = round(avg, 1)
+                if block_scores:
+                    department_data[dept][block_name] = round(sum(block_scores) / len(block_scores), 1)
                 else:
-                    department_data[dept][comp] = 0
+                    department_data[dept][block_name] = 0
         
         return jsonify(department_data)
     
-    return jsonify(competency_stats)
+    return jsonify({})
 
 @bp.route('/users', methods=['GET'])
 @require_admin
@@ -169,9 +181,8 @@ def users_list():
 @bp.route('/users/data', methods=['GET'])
 @require_admin
 def users_data():
-    """Get list of all users with their scores."""
+    """Get list of all users with their scores (matrix-based)."""
     users = User.query.all()
-    irt = IRTScorer()
     
     users_list = []
     for user in users:
@@ -182,23 +193,32 @@ def users_data():
         ).order_by(Session.ended_at.desc()).first()
         
         if session:
-            snapshots = ProficiencySnapshot.query.filter_by(session_id=session.id).all()
-            scores = {s.competency: s.score_0_100 for s in snapshots}
+            snapshot = ProficiencySnapshot.query.filter_by(session_id=session.id).first()
             
-            global_score = irt.calculate_global_score(scores)
-            global_level = irt.calculate_level(global_score)
-            
-            users_list.append({
-                'id': user.id,
-                'name': user.name,
-                'email': user.email,
-                'department': user.department or 'N/A',
-                'role': user.role or 'N/A',
-                'global_score': round(global_score, 1),
-                'global_level': global_level,
-                'completed_at': session.ended_at.isoformat() if session.ended_at else None,
-                'time_spent_s': session.time_spent_s
-            })
+            if snapshot:
+                users_list.append({
+                    'id': user.id,
+                    'name': user.name,
+                    'email': user.email,
+                    'department': user.department or 'N/A',
+                    'role': user.role or 'N/A',
+                    'raw_score': snapshot.raw_score,
+                    'maturity_level': snapshot.maturity_level or 'N/A',
+                    'completed_at': session.ended_at.isoformat() if session.ended_at else None,
+                    'time_spent_s': session.time_spent_s
+                })
+            else:
+                users_list.append({
+                    'id': user.id,
+                    'name': user.name,
+                    'email': user.email,
+                    'department': user.department or 'N/A',
+                    'role': user.role or 'N/A',
+                    'raw_score': None,
+                    'maturity_level': 'Sem dados',
+                    'completed_at': session.ended_at.isoformat() if session.ended_at else None,
+                    'time_spent_s': session.time_spent_s
+                })
         else:
             # User registered but hasn't completed assessment
             users_list.append({
@@ -207,8 +227,8 @@ def users_data():
                 'email': user.email,
                 'department': user.department or 'N/A',
                 'role': user.role or 'N/A',
-                'global_score': None,
-                'global_level': 'Pendente',
+                'raw_score': None,
+                'maturity_level': 'Pendente',
                 'completed_at': None,
                 'time_spent_s': None
             })
@@ -218,28 +238,34 @@ def users_data():
 @bp.route('/users/<int:user_id>', methods=['GET'])
 @require_admin
 def user_detail(user_id):
-    """Get detailed information about a user."""
+    """Get detailed information about a user (matrix-based)."""
     user = User.query.get_or_404(user_id)
     sessions = Session.query.filter_by(user_id=user_id, status='completed').all()
     
     session_data = []
     for sess in sessions:
-        snapshots = ProficiencySnapshot.query.filter_by(session_id=sess.id).all()
-        scores = {s.competency: s.score_0_100 for s in snapshots}
+        snapshot = ProficiencySnapshot.query.filter_by(session_id=sess.id).first()
         
-        irt = IRTScorer()
-        global_score = irt.calculate_global_score(scores)
-        global_level = irt.calculate_level(global_score)
-        
-        session_data.append({
-            'id': sess.id,
-            'started_at': sess.started_at.isoformat(),
-            'ended_at': sess.ended_at.isoformat() if sess.ended_at else None,
-            'time_spent_s': sess.time_spent_s,
-            'global_score': round(global_score, 1),
-            'global_level': global_level,
-            'competency_scores': scores
-        })
+        if snapshot:
+            session_data.append({
+                'id': sess.id,
+                'started_at': sess.started_at.isoformat(),
+                'ended_at': sess.ended_at.isoformat() if sess.ended_at else None,
+                'time_spent_s': sess.time_spent_s,
+                'raw_score': snapshot.raw_score,
+                'maturity_level': snapshot.maturity_level,
+                'block_scores': snapshot.block_scores
+            })
+        else:
+            session_data.append({
+                'id': sess.id,
+                'started_at': sess.started_at.isoformat(),
+                'ended_at': sess.ended_at.isoformat() if sess.ended_at else None,
+                'time_spent_s': sess.time_spent_s,
+                'raw_score': None,
+                'maturity_level': 'Sem dados',
+                'block_scores': {}
+            })
     
     return jsonify({
         'user': {
