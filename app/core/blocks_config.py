@@ -4,49 +4,51 @@ Configuração dos 4 Blocos Temáticos do OAZ IA Profiler - Matriz Simplificada
 Sistema de avaliação em 4 blocos com pontuação simples (1-4 por questão).
 """
 
-# 4 Blocos Temáticos (substituem as 9 competências anteriores)
+# 4 Blocos Temáticos - FASE 1 (MACRO/TRANSVERSAL)
+# Perguntas genéricas aplicáveis a TODOS os profissionais, independente de área ou cargo
 BLOCKS = {
     "Percepção e Atitude": {
         "id": "percepcao",
         "emoji": "🧭",
-        "description": "Avalia o quanto a pessoa compreende e se posiciona diante da IA",
+        "description": "Avalia a compreensão conceitual sobre o que é IA e como ela se aplica ao trabalho de forma ampla (competência transversal)",
         "question_count": 3,
         "examples": [
-            "Quando você ouve falar em 'Inteligência Artificial', o que vem à sua cabeça primeiro?",
-            "Como você definiria o papel da IA no futuro da sua profissão?",
-            "Qual sua opinião sobre o impacto da IA no mercado de trabalho?"
+            "Quando você ouve falar em 'Inteligência Artificial', qual é sua primeira reação?",
+            "Como você enxerga o papel da IA no futuro do trabalho em geral?",
+            "O quanto você acredita que a IA pode impactar as atividades profissionais?"
         ]
     },
     "Uso Prático": {
         "id": "uso_pratico",
         "emoji": "🧰",
-        "description": "Avalia o nível de aplicação real no dia a dia de trabalho",
+        "description": "Avalia a frequência e profundidade de uso de ferramentas de IA no dia a dia profissional (aplicável a qualquer área)",
         "question_count": 3,
         "examples": [
-            "Com que frequência você usa ferramentas de IA (ChatGPT, Copilot, Claude, etc.)?",
-            "Para quais tipos de atividades você já usou IA?",
-            "Quando você usa IA, o que normalmente faz?"
+            "Com que frequência você usa ferramentas de IA (ChatGPT, Copilot, etc.) no seu trabalho?",
+            "Para quais tipos de tarefas do trabalho você costuma usar IA?",
+            "Quando você precisa resolver um problema, você considera usar IA como solução?"
         ]
     },
     "Conhecimento e Entendimento": {
         "id": "conhecimento",
         "emoji": "🧠",
-        "description": "Mede o nível de consciência técnica e conceitual",
+        "description": "Mede o raciocínio lógico/analítico e capacidade de pesquisa sobre conceitos de IA (competência cognitiva universal)",
         "question_count": 2,
         "examples": [
-            "Você sabe o que é um modelo de linguagem (LLM)?",
-            "Você entende a diferença entre IA generativa e IA preditiva?",
-            "Quando você lê notícias sobre IA, o que costuma fazer?"
+            "Quando você lê ou ouve sobre um novo recurso de IA, o que costuma fazer?",
+            "Você consegue explicar para alguém o que é Inteligência Artificial?",
+            "Quanto você entende sobre como as ferramentas de IA funcionam?"
         ]
     },
     "Cultura e Autonomia Digital": {
         "id": "cultura",
         "emoji": "🚀",
-        "description": "Mede a mentalidade de aprendizado e adaptação tecnológica",
+        "description": "Mede a mentalidade de aprendizado contínuo, curiosidade e capacidade de adaptação tecnológica (competência comportamental)",
         "question_count": 2,
         "examples": [
-            "Se amanhã surgisse uma nova ferramenta de IA útil para sua área, você...",
-            "Como você se sente em relação à IA no seu trabalho?"
+            "Se surgisse uma nova ferramenta de IA que poderia ajudar no trabalho, qual seria sua atitude?",
+            "Você costuma buscar aprender sobre novas tecnologias e ferramentas?",
+            "Como você se sente em relação a mudanças tecnológicas no ambiente de trabalho?"
         ]
     }
 }

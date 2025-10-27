@@ -2,11 +2,11 @@
 
 ## Overview
 
-OAZ IA Profiler is an AI maturity assessment platform that evaluates employees' proficiency across 4 key dimensions through a streamlined 10-question assessment. The system uses **100% OpenAI-generated questions** personalized to each user's role and department, with a simplified scoring model (10-40 points) that classifies employees into 4 maturity levels to direct them to appropriate training programs.
+OAZ IA Profiler is an AI maturity assessment platform that evaluates employees' proficiency across 4 key dimensions through a streamlined 10-question assessment. The system uses **100% OpenAI-generated MACRO (transversal) questions** with a simplified scoring model (10-40 points) that classifies employees into 4 maturity levels to direct them to appropriate training programs.
 
-The application features a multi-agent ecosystem where specialized agents handle question generation, response grading, and maturity classification. All questions are generated dynamically via GPT-4o, ensuring relevance and practical focus on real-world AI tool usage.
+The application features a multi-agent ecosystem where specialized agents handle question generation, response grading, and maturity classification. All questions are generated dynamically via GPT-4o using a **MACRO/transversal approach** (Phase 1), ensuring equity and comparability across all professionals regardless of role or department.
 
-**Status**: ✅ Production ready (v2.0.0) - Simplified matrix-based assessment with 4-block structure and 100% adaptive question generation
+**Status**: ✅ Production ready (v2.1.0) - MACRO (transversal) assessment measuring universal competencies: conceptual understanding, logical reasoning, and information-seeking behavior
 
 ## User Preferences
 
@@ -32,13 +32,16 @@ Preferred communication style: Simple, everyday language.
 The application implements a simplified agent ecosystem coordinated by `AgentOrchestratorMatrix`:
 
 1. **AgentSelectorMatrix**: Manages question distribution across 4 blocks with predetermined counts (10 questions total)
-2. **AgentGenerator**: **100% dynamic question generation** using GPT-4o with:
-   - **Personalization**: Questions adapted to user's name, role, and department
+2. **AgentGenerator**: **100% dynamic MACRO (transversal) question generation** using GPT-4o with:
+   - **Phase 1 - MACRO Approach**: Questions are GENERIC and applicable to ALL professionals (no personalization by role/department)
+   - **Universal Competencies**: Focuses on conceptual understanding, logical reasoning, and information-seeking behavior
+   - **Equity**: Same questions for all users to ensure fair comparison across departments/roles
    - **Progressive difficulty**: Choices A/B/C/D represent increasing maturity levels (1-4 points)
-   - **Practical focus**: Questions about real-world AI tool usage and scenarios
+   - **Transversal focus**: Questions about general AI awareness and application, not area-specific technical skills
    - **Enhanced prompts** for creating subtle, overlapping alternatives (not obvious correct answers)
    - **Distractor quality control** - options are plausible and represent different maturity levels
    - **Length balance** - all choices have similar length (±30% variance)
+   - **Future Phase 2 (MICRO)**: System is prepared for future area-specific modules after Phase 1 baseline
 3. **AgentGraderMatrix**: Simple deterministic grading mapping A=1, B=2, C=3, D=4 points
 4. **SemanticValidator**: Quality assurance for generated questions (optional, can be enabled for stricter validation)
 
@@ -75,10 +78,15 @@ Database schema implemented with SQLAlchemy models (matrix-based):
 - Real-time progress tracking and form validation
 
 ### Assessment Content Management
-- **100% dynamic generation**: No pre-seeded questions - all generated on-demand via OpenAI
-- **Personalization**: Each question tailored to user's role and department
-- **4 question blocks**: Distributed across Percepção, Uso Prático, Conhecimento, Cultura
+- **100% dynamic MACRO generation**: No pre-seeded questions - all generated on-demand via OpenAI
+- **Phase 1 - Transversal Approach**: Questions are GENERIC for all users, NOT personalized by role/department
+- **Universal Competencies Measured**:
+  * Conceptual Understanding: What is AI and how it applies to work (broad, not area-specific)
+  * Logical/Analytical Reasoning: Ability to identify where AI can solve problems
+  * Information-Seeking: Effort to research and apply AI knowledge
+- **4 question blocks**: Distributed across Percepção, Uso Prático, Conhecimento, Cultura (all transversal)
 - **Progressive choice design**: Options A/B/C/D represent increasing maturity (1-4 points)
+- **Equity and Comparability**: Same evaluation criteria for all professionals before diving into area-specific training
 
 ### Scoring & Reporting
 - **Simple additive scoring**: Sum of points across 10 questions (10-40 range)
@@ -89,19 +97,22 @@ Database schema implemented with SQLAlchemy models (matrix-based):
 - CSV/XLSX export capabilities for administrative reporting
 
 ### LLM Integration Layer
-**100% OpenAI-powered** question generation and quality control via `LLMProvider` class:
-- **Dynamic question generation** (`generate_matrix_question`):
-  - **Personalization**: Uses user name, role, department for context-aware questions
+**100% OpenAI-powered MACRO (transversal)** question generation via `LLMProvider` class:
+- **Dynamic MACRO question generation** (`generate_matrix_question`):
+  - **Phase 1 - MACRO/Transversal**: Questions are GENERIC for all professionals (NO role/department personalization)
+  - **Universal Competencies**: Focuses on conceptual understanding, logical reasoning, information-seeking
+  - **Equity**: Same questions ensure fair comparison across all departments/roles
   - **Progressive maturity design**: Choices A/B/C/D represent 1/2/3/4 maturity levels
-  - **Practical focus**: Questions about real-world AI tool usage scenarios
-  - **Quality prompts**: Enhanced prompts for subtle, overlapping alternatives (no obvious answers)
+  - **Transversal focus**: Questions about general AI awareness, not area-specific technical skills
+  - **Quality prompts**: Enhanced prompts with examples of good vs. bad macro questions
   - **Distractor control**: Options are plausible and represent different maturity stages
   - **Length balance**: All choices similar length (±30% variance)
-- **Block-specific generation**: Questions tailored to each of the 4 blocks (Percepção, Uso Prático, Conhecimento, Cultura)
+  - **Anti-repetition**: Previous questions passed to prompt to ensure variety
+- **Block-specific generation**: Questions aligned to 4 blocks but with transversal/universal approach
 - **Retry logic**: Up to 3 generation attempts if quality validation fails
 - **Embeddings API**: text-embedding-3-small for semantic distance validation (optional)
 - Uses GPT-4o model with JSON structured outputs for reliability and proper `max_completion_tokens` parameter
-- **Corporate focus**: Questions designed to identify precise maturity levels for training direction
+- **Training direction**: Baseline assessment identifies maturity levels before area-specific training (Phase 2 future)
 
 ## External Dependencies
 

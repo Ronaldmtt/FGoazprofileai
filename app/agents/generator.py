@@ -23,30 +23,34 @@ class AgentGenerator:
         user_context: dict = None
     ) -> Dict[str, Any]:
         """
-        Generate a personalized question for the Matrix assessment.
+        Generate a MACRO (transversal) question for Phase 1 assessment.
+        
+        Questions are NOT personalized by role/department - they measure universal
+        competencies applicable to all professionals (conceptual understanding,
+        logical reasoning, information-seeking behavior).
         
         Args:
             block_name: One of 4 blocks (Percepção, Uso Prático, Conhecimento, Cultura)
-            response_history: Previous responses for context
-            user_context: User info (name, department, role) for personalization
+            response_history: Previous responses for context (avoid repetition)
+            user_context: User info (name only for UX, NOT used in question generation)
             
         Returns:
             Dict with question data ready to be saved as Item
         """
         from app.core.blocks_config import BLOCKS
         
-        logger.info(f"Generating matrix question for block: {block_name}")
+        logger.info(f"Generating MACRO (transversal) question for block: {block_name}")
         
         if not user_context:
-            user_context = {'name': 'Usuário', 'department': 'Geral', 'role': 'Profissional'}
+            user_context = {'name': 'Usuário'}
         
         # Get block configuration
         block_config = BLOCKS.get(block_name, {})
         block_description = block_config.get('description', '')
         block_examples = block_config.get('examples', [])
         
-        # Build context from history
-        context_str = f"\n**Perfil do Usuário**:\n- Nome: {user_context['name']}\n- Área: {user_context['department']}\n- Cargo: {user_context['role']}\n"
+        # Build context (MACRO: no role/department, only deduplication)
+        context_str = ""
         
         # Add previously asked questions to AVOID REPETITION
         previous_questions = []
@@ -66,17 +70,23 @@ class AgentGenerator:
         for example in block_examples[:2]:
             examples_str += f"- {example}\n"
         
-        prompt = f"""Você é um especialista em criar questionários de maturidade em IA para ambientes corporativos.
+        prompt = f"""Você é um especialista em criar questionários de maturidade em IA para avaliação MACRO (transversal).
 
-**CONTEXTO DA AVALIAÇÃO**:
+**CONTEXTO DA AVALIAÇÃO - FASE 1 (MACRO)**:
+Esta é uma avaliação GERAL E TRANSVERSAL que mede competências universais aplicáveis a TODOS os profissionais, independente de área ou cargo.
+
 - Empresa: OAZ
 - Bloco sendo avaliado: **{block_name}** - {block_description}
-- Cargo do usuário: {user_context['role']}
-- Área: {user_context['department']}
+- Tipo de avaliação: **MACRO (transversal)** - NÃO personalizar por área/cargo
 
 {context_str}
 
 {examples_str}
+
+**COMPETÊNCIAS MACRO QUE ESTAMOS MEDINDO**:
+1. **Compreensão Conceitual**: O que é IA e como se aplica ao trabalho (de forma ampla, não específica)
+2. **Raciocínio Lógico/Analítico**: Capacidade de identificar situações onde IA pode resolver problemas
+3. **Capacidade de Pesquisa/Interpretação**: Esforço para buscar e aplicar conhecimento sobre IA
 
 **FORMATO OBRIGATÓRIO - MATRIZ DE 4 ALTERNATIVAS PROGRESSIVAS**:
 
@@ -99,10 +109,12 @@ As 4 alternativas devem representar níveis crescentes de maturidade em IA, do m
    - Não use sempre/nunca de forma óbvia
    - Varie a posição da resposta mais avançada
 
-3. **Personalização ao contexto do usuário**:
-   - Use termos da área {user_context['department']}
-   - Exemplos relevantes ao cargo {user_context['role']}
-   - Situações práticas do dia a dia
+3. **ABORDAGEM MACRO (CRÍTICO)**:
+   - Perguntas devem ser GENÉRICAS e aplicáveis a QUALQUER profissional
+   - NÃO mencione áreas específicas (marketing, RH, tecnologia, jurídico, etc.)
+   - NÃO mencione cargos específicos (gerente, analista, diretor, etc.)
+   - Use linguagem universal: "no seu trabalho", "nas suas atividades", "na sua rotina"
+   - Foco em COMPETÊNCIAS TRANSVERSAIS, não habilidades técnicas de área
 
 4. **IMPORTANTE - NÃO REVELE O SISTEMA DE PONTUAÇÃO**:
    - NÃO inclua pontos (ex: "1 pt", "2 pontos") nas alternativas
@@ -110,8 +122,15 @@ As 4 alternativas devem representar níveis crescentes de maturidade em IA, do m
    - As alternativas devem conter APENAS o texto descritivo da opção
    - O usuário NÃO deve saber qual alternativa vale mais pontos
 
-**EXEMPLO DE BOA PERGUNTA**:
+**EXEMPLO DE BOA PERGUNTA MACRO (TRANSVERSAL)**:
 
+❌ RUIM (específico de área): "Como você usa IA para criar campanhas de marketing?"
+✅ BOM (macro/universal): "Com que frequência você usa ferramentas de IA no seu trabalho?"
+
+❌ RUIM (menciona cargo): "Como gerente, você incentiva o uso de IA?"
+✅ BOM (macro/universal): "Você costuma compartilhar conhecimentos sobre IA com colegas?"
+
+**PERGUNTA EXEMPLO**:
 Pergunta: "Com que frequência você usa ferramentas de IA (ChatGPT, Copilot, etc.) no seu trabalho?"
 
 A) Nunca usei ou testei apenas por curiosidade
@@ -121,7 +140,7 @@ D) Uso diariamente, automatizo processos e ensino outros colegas
 
 **RETORNE JSON (SEM PONTOS OU NÍVEIS NAS ALTERNATIVAS)**:
 {{
-  "stem": "Pergunta clara e direta relacionada ao bloco '{block_name}'",
+  "stem": "Pergunta MACRO (transversal) relacionada ao bloco '{block_name}' - aplicável a QUALQUER profissional",
   "choices": [
     "Nunca considerei ou não vejo relevância",
     "Já ouvi falar e tenho curiosidade de testar",
@@ -132,7 +151,12 @@ D) Uso diariamente, automatizo processos e ensino outros colegas
   "block": "{block_name}"
 }}
 
-LEMBRE-SE: Esta não é uma prova com "certas" e "erradas". É uma avaliação de maturidade onde cada pessoa escolhe a opção que MELHOR REFLETE sua realidade atual! **NUNCA inclua pontos ou classificações de nível nas alternativas mostradas ao usuário.**"""
+LEMBRE-SE: 
+- Esta é uma avaliação MACRO (transversal) - perguntas iguais para TODOS os profissionais
+- Foco em competências UNIVERSAIS, não específicas de área
+- Avalie: compreensão conceitual, raciocínio lógico, capacidade de pesquisa
+- NÃO é prova com "certas" e "erradas" - cada pessoa escolhe a opção que reflete sua realidade
+- **NUNCA inclua pontos ou classificações de nível nas alternativas**"""
 
         try:
             # Skip if LLM provider is stub
@@ -140,14 +164,14 @@ LEMBRE-SE: Esta não é uma prova com "certas" e "erradas". É uma avaliação d
                 logger.warning("[ADAPTIVE] OpenAI not available, skipping generation")
                 return None
             
-            logger.info(f"[ADAPTIVE] Calling OpenAI for user {user_context['name']} ({user_context['role']} - {user_context['department']})")
+            logger.info(f"[ADAPTIVE] Calling OpenAI for MACRO (transversal) question generation - block: {block_name}")
             
             response = self.llm.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {
                         "role": "system",
-                        "content": "Você é um gerador de questões técnicas para avaliação de proficiência em IA. Seja preciso, técnico e contextualizado."
+                        "content": "Você é um gerador de questões MACRO (transversais) para avaliação de competências universais em IA. Crie perguntas genéricas aplicáveis a TODOS os profissionais, focando em: compreensão conceitual, raciocínio lógico e capacidade de pesquisa. NÃO personalize por área ou cargo."
                     },
                     {
                         "role": "user",

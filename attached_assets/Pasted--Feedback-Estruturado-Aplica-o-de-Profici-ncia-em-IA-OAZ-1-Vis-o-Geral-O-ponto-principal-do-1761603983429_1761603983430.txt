@@ -1,0 +1,49 @@
+🧠 Feedback Estruturado — Aplicação de Proficiência em IA (OAZ)
+1. Visão Geral
+
+O ponto principal do feedback é a necessidade de adotar uma abordagem mais macro no teste de proficiência em inteligência artificial. Em vez de segmentar imediatamente por área (como marketing, RH, tecnologia etc.), a sugestão é iniciar com uma avaliação ampla e transversal, voltada para o entendimento geral do impacto da IA nas atividades profissionais.
+
+Essa abordagem permitirá medir o nível de conhecimento comum entre diferentes setores, criando uma base de comparação sólida antes de avançar para módulos mais específicos.
+
+2. Justificativa
+
+Diferenças entre áreas: Algumas equipes já estão mais expostas à tecnologia e possuem referências e recursos disponíveis, enquanto outras ainda têm pouco contato com IA e ferramentas digitais.
+
+Equidade na avaliação: Um teste inicial macro garante que todos os colaboradores sejam avaliados sob o mesmo critério de compreensão e raciocínio, antes de considerar as particularidades de cada função.
+
+Maior aplicabilidade: Ao medir competências amplas — como raciocínio lógico, capacidade de buscar informações, e entendimento sobre o papel da IA no trabalho —, o resultado será mais representativo e útil para direcionar treinamentos corporativos gerais.
+
+3. Proposta de Estrutura
+Fase 1 – Avaliação Macro (Geral)
+
+Foco em medir:
+
+Compreensão conceitual sobre o que é IA e como ela se aplica a contextos de trabalho.
+
+Raciocínio lógico e analítico, simulando situações em que a IA pode ser usada para resolver problemas.
+
+Capacidade de pesquisa e interpretação de informações — avaliando o quanto o colaborador se esforça para buscar e aplicar conhecimento, em vez de apenas reproduzir termos técnicos.
+
+Fase 2 – Avaliação Micro (Por Área)
+
+Após a consolidação dos resultados gerais:
+
+Aplicar módulos específicos para cada setor (ex.: marketing, jurídico, financeiro, operacional).
+
+Cada módulo pode medir o nível de aplicabilidade prática da IA dentro da rotina da área.
+
+Essa segunda etapa permitirá um diagnóstico mais detalhado, alinhando os treinamentos às reais necessidades de cada equipe.
+
+4. Próximos Passos Sugeridos
+
+Finalizar e aplicar o teste macro com base na versão atual da aplicação.
+
+Analisar resultados agregados para identificar padrões e lacunas de entendimento entre áreas.
+
+Definir os eixos temáticos dos testes específicos, alinhando-os aos resultados da etapa macro.
+
+Desenvolver trilhas de aprendizado personalizadas, direcionando os treinamentos conforme os níveis de proficiência detectados.
+
+5. Síntese
+
+A aplicação deve começar com uma abordagem global e cognitiva, avaliando raciocínio, entendimento e curiosidade sobre IA, antes de mergulhar em conteúdos técnicos por área. Essa estratégia garante justiça, comparabilidade e clareza nos dados que orientarão os treinamentos da OAZ.
