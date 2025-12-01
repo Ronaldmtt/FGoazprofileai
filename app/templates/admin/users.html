@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block title %}Lista de Usuários - Admin{% endblock %}
 
@@ -10,14 +10,9 @@
             <h2 class="text-3xl font-bold text-gray-900 mb-2">Lista de Usuários</h2>
             <p class="text-gray-600">Todos os usuários e suas pontuações</p>
         </div>
-        <div class="flex gap-2">
-            <a href="/admin/dashboard" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
-                ← Dashboard
-            </a>
-            <a href="/admin/logout" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
-                Sair
-            </a>
-        </div>
+        <a href="/admin/dashboard" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+            ← Dashboard
+        </a>
     </div>
 
     <!-- Stats Cards -->
