@@ -17,6 +17,8 @@ def index():
 @bp.route('/login', methods=['GET'])
 def login_page():
     """Render login page."""
+    # Clear any existing session data when accessing login page
+    flask_session.clear()
     return render_template('login.html')
 
 @bp.route('/magic-link', methods=['POST'])
