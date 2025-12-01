@@ -30,6 +30,9 @@ def start_page():
     ).first()
     
     if active_session:
+        # IMPORTANT: Restore session_id to flask_session to prevent redirect loop
+        # This happens when user has active session but session_id expired in browser
+        flask_session['session_id'] = active_session.id
         return redirect(url_for('items.next_page'))
     
     return render_template('start.html', user=user)
