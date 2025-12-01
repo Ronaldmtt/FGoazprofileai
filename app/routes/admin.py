@@ -240,6 +240,7 @@ def users_data():
 def delete_user(user_id):
     """Delete a user and all related data."""
     user = User.query.get_or_404(user_id)
+    user_email = user.email
     
     # Get all sessions for this user
     sessions = Session.query.filter_by(user_id=user_id).all()
@@ -247,9 +248,6 @@ def delete_user(user_id):
     for sess in sessions:
         # Delete responses for this session
         Response.query.filter_by(session_id=sess.id).delete()
-        
-        # Delete items for this session
-        Item.query.filter_by(session_id=sess.id).delete()
         
         # Delete proficiency snapshots for this session
         ProficiencySnapshot.query.filter_by(session_id=sess.id).delete()
@@ -265,7 +263,7 @@ def delete_user(user_id):
         actor=flask_session.get('admin_username', 'admin'),
         action='user_deleted',
         target='users',
-        payload={'user_id': user_id, 'user_email': user.email}
+        payload={'user_id': user_id, 'user_email': user_email}
     )
     
     return jsonify({'message': 'Usuário e todos os dados relacionados foram deletados com sucesso'})
