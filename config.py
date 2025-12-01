@@ -3,19 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_database_uri():
-    """Get database URI - use SQLite for development."""
-    # Always use SQLite for local development - PostgreSQL will be used in production
-    # via Replit's deployment system
-    if os.getenv('REPLIT_DEPLOYMENT') == '1':
-        db_url = os.getenv('DATABASE_URL')
-        if db_url:
-            return db_url
-    return 'sqlite:///oaz_profiler.db'
-
 class Config:
     SECRET_KEY = os.getenv('APP_SECRET', os.getenv('SESSION_SECRET', 'dev-secret-key-change-me'))
-    SQLALCHEMY_DATABASE_URI = get_database_uri()
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///oaz_profiler.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
