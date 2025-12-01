@@ -3,10 +3,33 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def get_database_uri():
+    """Get database URI - use PostgreSQL only in production deployment."""
+    is_production = os.getenv('REPLIT_DEPLOYMENT') == '1'
+    database_url = os.getenv('DATABASE_URL')
+    
+    if is_production and database_url:
+        return database_url
+    return 'sqlite:///oaz_profiler.db'
+
+def get_engine_options():
+    """Get SQLAlchemy engine options based on database type."""
+    is_production = os.getenv('REPLIT_DEPLOYMENT') == '1'
+    database_url = os.getenv('DATABASE_URL')
+    
+    if is_production and database_url:
+        return {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+            'connect_args': {'connect_timeout': 10}
+        }
+    return {}
+
 class Config:
     SECRET_KEY = os.getenv('APP_SECRET', os.getenv('SESSION_SECRET', 'dev-secret-key-change-me'))
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///oaz_profiler.db'
+    SQLALCHEMY_DATABASE_URI = get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = get_engine_options()
     
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', '1') == '1'
