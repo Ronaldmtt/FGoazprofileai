@@ -23,6 +23,10 @@
                     <span class="text-sm text-gray-600">{{ session.get('email') }}</span>
                     <a href="/auth/logout" class="text-sm text-blue-600 hover:text-blue-800">Sair</a>
                 </div>
+                {% else %}
+                <div class="flex items-center">
+                    <a href="/admin/login" class="text-sm text-gray-600 hover:text-gray-800">Admin</a>
+                </div>
                 {% endif %}
             </div>
         </div>
