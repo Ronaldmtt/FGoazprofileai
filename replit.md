@@ -36,13 +36,14 @@ The application implements a simplified agent ecosystem coordinated by `AgentOrc
    - **Phase 1 - MACRO Approach**: Questions are GENERIC and applicable to ALL professionals (no personalization by role/department)
    - **Universal Competencies**: Focuses on conceptual understanding, logical reasoning, and information-seeking behavior
    - **Equity**: Same questions for all users to ensure fair comparison across departments/roles
-   - **Progressive difficulty**: Choices A/B/C/D represent increasing maturity levels (1-4 points)
+   - **SHUFFLED alternatives**: Choices are randomly ordered to prevent "D is always best" gaming
+   - **Dynamic points mapping**: Each question stores its own position-to-points mapping
    - **Transversal focus**: Questions about general AI awareness and application, not area-specific technical skills
    - **Enhanced prompts** for creating subtle, overlapping alternatives (not obvious correct answers)
    - **Distractor quality control** - options are plausible and represent different maturity levels
    - **Length balance** - all choices have similar length (±30% variance)
    - **Future Phase 2 (MICRO)**: System is prepared for future area-specific modules after Phase 1 baseline
-3. **AgentGraderMatrix**: Simple deterministic grading mapping A=1, B=2, C=3, D=4 points
+3. **AgentGraderMatrix**: Dynamic grading using points_mapping from item metadata (not fixed A=1, B=2, etc.)
 4. **SemanticValidator**: Quality assurance for generated questions (optional, can be enabled for stricter validation)
 
 Each agent maintains separation of concerns while the orchestrator coordinates state management and scoring flow.

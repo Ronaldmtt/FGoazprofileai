@@ -1,5 +1,6 @@
 from typing import Dict, Any
 import json
+import random
 from app.core.llm_provider import LLMProvider
 from app.models import Item
 import logging
@@ -202,18 +203,41 @@ LEMBRE-SE:
             
             question_data = json.loads(raw_content)
             
+            # Get original choices (ordered by maturity: 1, 2, 3, 4 points)
+            original_choices = question_data.get('choices', [])
+            
+            # Shuffle choices to prevent "D is always best" gaming
+            # Create list of (choice_text, original_points)
+            choices_with_points = [
+                (original_choices[0], 1),  # Originally position 0 = 1 point
+                (original_choices[1], 2),  # Originally position 1 = 2 points
+                (original_choices[2], 3),  # Originally position 2 = 3 points
+                (original_choices[3], 4),  # Originally position 3 = 4 points
+            ] if len(original_choices) == 4 else [(c, i+1) for i, c in enumerate(original_choices)]
+            
+            # Shuffle the order
+            random.shuffle(choices_with_points)
+            
+            # Extract shuffled choices and create points mapping
+            shuffled_choices = [c[0] for c in choices_with_points]
+            # points_mapping: maps position (0=A, 1=B, 2=C, 3=D) to points
+            points_mapping = {i: c[1] for i, c in enumerate(choices_with_points)}
+            
+            logger.info(f"[ADAPTIVE] Shuffled choices. Points mapping: A={points_mapping.get(0)}, B={points_mapping.get(1)}, C={points_mapping.get(2)}, D={points_mapping.get(3)}")
+            
             # Build complete item data for matrix format
             return {
                 'stem': question_data.get('stem', 'Questão gerada'),
                 'type': 'matrix',  # New type for matrix questions
                 'block': block_name,  # Changed from 'competency' to 'block'
-                'choices': question_data.get('choices', []),
-                'progressive_levels': True,  # Mark as progressive (A=1, B=2, C=3, D=4)
+                'choices': shuffled_choices,  # Shuffled order
+                'progressive_levels': False,  # NOT progressive anymore - order is random
                 'tags': f'generated,matrix,{block_config.get("id", "unknown")}',
                 'metadata': {
                     'generated': True,
                     'block_description': block_description,
-                    'user_context': user_context
+                    'user_context': user_context,
+                    'points_mapping': points_mapping  # NEW: maps position to points
                 }
             }
             
