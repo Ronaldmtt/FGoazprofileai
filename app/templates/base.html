@@ -18,7 +18,7 @@
                 <div class="flex items-center">
                     <h1 class="text-xl font-bold text-gray-900">OAZ IA Profiler</h1>
                 </div>
-                {% if session.get('email') %}
+                {% if session.get('user_id') and session.get('email') %}
                 <div class="flex items-center space-x-4">
                     <span class="text-sm text-gray-600">{{ session.get('email') }}</span>
                     <a href="/auth/logout" class="text-sm text-blue-600 hover:text-blue-800">Sair</a>
