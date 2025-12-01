@@ -4,22 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_database_uri():
-    """Get database URI - use PostgreSQL if available, otherwise SQLite."""
-    database_url = os.getenv('DATABASE_URL')
-    if database_url:
-        return database_url
+    """Get database URI - always use SQLite for reliability."""
     return 'sqlite:///oaz_profiler.db'
 
 def get_engine_options():
-    """Get SQLAlchemy engine options for PostgreSQL."""
-    database_url = os.getenv('DATABASE_URL')
-    if database_url:
-        return {
-            'pool_pre_ping': True,
-            'pool_size': 5,
-            'max_overflow': 10,
-            'pool_recycle': 300
-        }
+    """Get SQLAlchemy engine options."""
     return {}
 
 class Config:
