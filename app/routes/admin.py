@@ -235,6 +235,41 @@ def users_data():
     
     return jsonify(users_list)
 
+@bp.route('/users/<int:user_id>', methods=['DELETE'])
+@require_admin
+def delete_user(user_id):
+    """Delete a user and all related data."""
+    user = User.query.get_or_404(user_id)
+    
+    # Get all sessions for this user
+    sessions = Session.query.filter_by(user_id=user_id).all()
+    
+    for sess in sessions:
+        # Delete responses for this session
+        Response.query.filter_by(session_id=sess.id).delete()
+        
+        # Delete items for this session
+        Item.query.filter_by(session_id=sess.id).delete()
+        
+        # Delete proficiency snapshots for this session
+        ProficiencySnapshot.query.filter_by(session_id=sess.id).delete()
+    
+    # Delete all sessions
+    Session.query.filter_by(user_id=user_id).delete()
+    
+    # Delete the user
+    db.session.delete(user)
+    db.session.commit()
+    
+    log_audit(
+        actor=flask_session.get('admin_username', 'admin'),
+        action='user_deleted',
+        target='users',
+        payload={'user_id': user_id, 'user_email': user.email}
+    )
+    
+    return jsonify({'message': 'Usuário e todos os dados relacionados foram deletados com sucesso'})
+
 @bp.route('/users/<int:user_id>', methods=['GET'])
 @require_admin
 def user_detail(user_id):
