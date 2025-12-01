@@ -1,4 +1,4 @@
-modules = ["python-3.11", "postgresql-16"]
+modules = ["python-3.11"]
 [agent]
 expertMode = true
 integrations = ["python_openai:1.0.0"]
@@ -40,9 +40,9 @@ localPort = 5001
 externalPort = 3000
 
 [[ports]]
-localPort = 44753
+localPort = 43963
 externalPort = 3001
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind=0.0.0.0:5000", "--reuse-port", "--workers=2", "wsgi:app"]
