@@ -1,4 +1,4 @@
-modules = ["python-3.11", "postgresql-16"]
+modules = ["python-3.11"]
 [agent]
 expertMode = true
 integrations = ["python_openai:1.0.0"]
@@ -38,6 +38,10 @@ externalPort = 80
 [[ports]]
 localPort = 5001
 externalPort = 3000
+
+[[ports]]
+localPort = 35895
+externalPort = 3001
 
 [deployment]
 deploymentTarget = "autoscale"
