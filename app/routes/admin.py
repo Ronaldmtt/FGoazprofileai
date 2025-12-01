@@ -413,6 +413,60 @@ def delete_item(item_id):
     
     return jsonify({'message': 'Item desativado com sucesso'})
 
+@bp.route('/users/<int:user_id>', methods=['DELETE'])
+@require_admin
+def delete_user(user_id):
+    """Delete user and all related data (cascade delete)."""
+    from app.models import Audit
+    
+    user = User.query.get_or_404(user_id)
+    user_email = user.email
+    user_name = user.name
+    
+    try:
+        # Get all sessions for this user
+        sessions = Session.query.filter_by(user_id=user_id).all()
+        session_ids = [s.id for s in sessions]
+        
+        # Delete responses for all user sessions
+        if session_ids:
+            Response.query.filter(Response.session_id.in_(session_ids)).delete(synchronize_session=False)
+            
+            # Delete proficiency snapshots
+            ProficiencySnapshot.query.filter(ProficiencySnapshot.session_id.in_(session_ids)).delete(synchronize_session=False)
+            
+            # Delete items created for user sessions
+            Item.query.filter(Item.session_id.in_(session_ids)).delete(synchronize_session=False)
+        
+        # Delete sessions
+        Session.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        
+        # Delete audit logs for this user
+        Audit.query.filter_by(actor=user_email).delete(synchronize_session=False)
+        
+        # Delete user
+        db.session.delete(user)
+        db.session.commit()
+        
+        log_audit(
+            actor=flask_session.get('admin_username', 'admin'),
+            action='user_deleted',
+            target='users',
+            payload={'deleted_user_id': user_id, 'deleted_user_email': user_email, 'deleted_user_name': user_name}
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Usuário {user_name} e todos os dados relacionados foram deletados'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao deletar usuário: {str(e)}'
+        }), 500
+
 @bp.route('/export.csv', methods=['GET'])
 @require_admin
 def export_csv():
