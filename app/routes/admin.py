@@ -37,13 +37,6 @@ def login():
     admin_username = os.environ.get('ADMIN_LOGIN', 'admin')
     admin_password = os.environ.get('ADMIN_PASSWORD', '')
     
-    # Debug log
-    print(f"[DEBUG] Input username: '{username}', Expected: '{admin_username}'")
-    print(f"[DEBUG] Password provided: {len(password)} chars, Expected: {len(admin_password)} chars")
-    print(f"[DEBUG] Password input repr: {repr(password)}")
-    print(f"[DEBUG] Password expected repr: {repr(admin_password)}")
-    print(f"[DEBUG] Username match: {username == admin_username}, Password match: {password == admin_password}")
-    
     if not admin_password:
         return jsonify({'error': 'Credenciais de admin não configuradas'}), 500
     
