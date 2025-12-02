@@ -1,11 +1,11 @@
-modules = ["python-3.11"]
+modules = ["python-3.12", "web"]
 [agent]
 expertMode = true
 integrations = ["python_openai:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["glibcLocales"]
+packages = ["glibcLocales", "libxcrypt"]
 
 [workflows]
 runButton = "Project"
@@ -38,6 +38,10 @@ externalPort = 80
 [[ports]]
 localPort = 5001
 externalPort = 3000
+
+[[ports]]
+localPort = 39863
+externalPort = 3002
 
 [[ports]]
 localPort = 43963
