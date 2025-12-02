@@ -34,7 +34,7 @@ def login():
     password = data.get('password', '').strip()
     
     # Get admin credentials from environment
-    admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    admin_username = os.environ.get('ADMIN_LOGIN', 'admin')
     admin_password = os.environ.get('ADMIN_PASSWORD', '')
     
     if not admin_password:
