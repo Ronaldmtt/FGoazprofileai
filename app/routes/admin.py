@@ -40,6 +40,8 @@ def login():
     # Debug log
     print(f"[DEBUG] Input username: '{username}', Expected: '{admin_username}'")
     print(f"[DEBUG] Password provided: {len(password)} chars, Expected: {len(admin_password)} chars")
+    print(f"[DEBUG] Password input repr: {repr(password)}")
+    print(f"[DEBUG] Password expected repr: {repr(admin_password)}")
     print(f"[DEBUG] Username match: {username == admin_username}, Password match: {password == admin_password}")
     
     if not admin_password:
