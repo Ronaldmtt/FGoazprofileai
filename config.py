@@ -5,7 +5,7 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv('APP_SECRET', os.getenv('SESSION_SECRET', 'dev-secret-key-change-me'))
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///oaz_profiler.db'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///oaz_profiler.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
