@@ -33,18 +33,42 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
                 <input 
                     type="text" 
                     x-model="searchQuery"
-                    placeholder="Nome, email, departamento..."
+                    placeholder="Nome, email..."
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 >
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por Nível</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Departamento</label>
+                <select 
+                    x-model="filterDept"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                >
+                    <option value="">Todos os departamentos</option>
+                    <template x-for="dept in departments" :key="dept">
+                        <option :value="dept" x-text="dept"></option>
+                    </template>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cargo</label>
+                <select 
+                    x-model="filterRole"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                >
+                    <option value="">Todos os cargos</option>
+                    <template x-for="role in roles" :key="role">
+                        <option :value="role" x-text="role"></option>
+                    </template>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nível</label>
                 <select 
                     x-model="filterLevel"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -311,6 +335,8 @@ function usersPage() {
         users: [],
         searchQuery: '',
         filterLevel: '',
+        filterDept: '',
+        filterRole: '',
         sortBy: 'score_desc',
         showDetailModal: false,
         selectedUser: null,
@@ -318,6 +344,16 @@ function usersPage() {
         showDeleteModal: false,
         userToDelete: null,
         isDeleting: false,
+        
+        get departments() {
+            const depts = [...new Set(this.users.map(u => u.department).filter(d => d))];
+            return depts.sort();
+        },
+        
+        get roles() {
+            const roles = [...new Set(this.users.map(u => u.role).filter(r => r))];
+            return roles.sort();
+        },
         
         get filteredUsers() {
             let filtered = this.users;
@@ -327,10 +363,18 @@ function usersPage() {
                 const query = this.searchQuery.toLowerCase();
                 filtered = filtered.filter(u => 
                     u.name.toLowerCase().includes(query) ||
-                    u.email.toLowerCase().includes(query) ||
-                    (u.department && u.department.toLowerCase().includes(query)) ||
-                    (u.role && u.role.toLowerCase().includes(query))
+                    u.email.toLowerCase().includes(query)
                 );
+            }
+            
+            // Department filter
+            if (this.filterDept) {
+                filtered = filtered.filter(u => u.department === this.filterDept);
+            }
+            
+            // Role filter
+            if (this.filterRole) {
+                filtered = filtered.filter(u => u.role === this.filterRole);
             }
             
             // Level filter
