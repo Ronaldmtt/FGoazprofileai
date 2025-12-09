@@ -664,16 +664,15 @@ function adminDashboard() {
             this.scheduleRender('roleCompare', () => this.renderRolesComparisonChart(), 100);
         },
         
-        resetCanvas(canvasId) {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return null;
-            const parent = canvas.parentNode;
-            const newCanvas = document.createElement('canvas');
-            newCanvas.id = canvasId;
-            newCanvas.style.width = '100%';
-            newCanvas.style.height = '100%';
-            parent.replaceChild(newCanvas, canvas);
-            return newCanvas;
+        getCanvas(canvasId) {
+            return document.getElementById(canvasId);
+        },
+        
+        destroyChart(chartKey) {
+            if (this.charts[chartKey]) {
+                this.charts[chartKey].destroy();
+                this.charts[chartKey] = null;
+            }
         },
         
         renderGlobalCharts() {
@@ -684,8 +683,8 @@ function adminDashboard() {
         renderGlobalLevelChart() {
             if (!this.stats.global) return;
             
-            if (this.charts.globalLevel) { this.charts.globalLevel.destroy(); this.charts.globalLevel = null; }
-            const ctx = this.resetCanvas('globalLevelChart');
+            this.destroyChart('globalLevel');
+            const ctx = this.getCanvas('globalLevelChart');
             if (!ctx) return;
             
             const levels = this.stats.global.level_distribution || {};
@@ -716,8 +715,8 @@ function adminDashboard() {
         renderGlobalBlockChart() {
             if (!this.stats.global) return;
             
-            if (this.charts.globalBlock) { this.charts.globalBlock.destroy(); this.charts.globalBlock = null; }
-            const ctx = this.resetCanvas('globalBlockChart');
+            this.destroyChart('globalBlock');
+            const ctx = this.getCanvas('globalBlockChart');
             if (!ctx) return;
             
             const blocks = this.stats.global.block_averages || {};
@@ -750,8 +749,8 @@ function adminDashboard() {
             if (!data) return;
             
             // Level chart
-            if (this.charts.frenteLevel) { this.charts.frenteLevel.destroy(); this.charts.frenteLevel = null; }
-            const levelCtx = this.resetCanvas('frenteLevelChart');
+            this.destroyChart('frenteLevel');
+            const levelCtx = this.getCanvas('frenteLevelChart');
             if (levelCtx) {
                 const levels = data.level_distribution || {};
                 this.charts.frenteLevel = new Chart(levelCtx, {
@@ -778,8 +777,8 @@ function adminDashboard() {
             }
             
             // Block chart
-            if (this.charts.frenteBlock) { this.charts.frenteBlock.destroy(); this.charts.frenteBlock = null; }
-            const blockCtx = this.resetCanvas('frenteBlockChart');
+            this.destroyChart('frenteBlock');
+            const blockCtx = this.getCanvas('frenteBlockChart');
             if (blockCtx) {
                 
                 const blocks = data.block_averages || {};
@@ -810,8 +809,8 @@ function adminDashboard() {
         
         renderFrentesComparisonChart() {
             if (!this.stats.frentes) return;
-            if (this.charts.frentesComparison) { this.charts.frentesComparison.destroy(); this.charts.frentesComparison = null; }
-            const ctx = this.resetCanvas('frentesComparisonChart');
+            this.destroyChart('frentesComparison');
+            const ctx = this.getCanvas('frentesComparisonChart');
             if (!ctx) return;
             
             const frentes = Object.keys(this.stats.frentes);
@@ -849,8 +848,8 @@ function adminDashboard() {
             if (!data) return;
             
             // Level chart
-            if (this.charts.deptLevel) { this.charts.deptLevel.destroy(); this.charts.deptLevel = null; }
-            const levelCtx = this.resetCanvas('deptLevelChart');
+            this.destroyChart('deptLevel');
+            const levelCtx = this.getCanvas('deptLevelChart');
             if (levelCtx) {
                 
                 const levels = data.level_distribution || {};
@@ -878,8 +877,8 @@ function adminDashboard() {
             }
             
             // Block chart
-            if (this.charts.deptBlock) { this.charts.deptBlock.destroy(); this.charts.deptBlock = null; }
-            const blockCtx = this.resetCanvas('deptBlockChart');
+            this.destroyChart('deptBlock');
+            const blockCtx = this.getCanvas('deptBlockChart');
             if (blockCtx) {
                 
                 const blocks = data.block_averages || {};
@@ -910,8 +909,8 @@ function adminDashboard() {
         
         renderDepartmentsComparisonChart() {
             if (!this.stats.departments) return;
-            if (this.charts.departments) { this.charts.departments.destroy(); this.charts.departments = null; }
-            const ctx = this.resetCanvas('departmentsChart');
+            this.destroyChart('departments');
+            const ctx = this.getCanvas('departmentsChart');
             if (!ctx) return;
             
             const depts = this.selectedDeptsCompare
@@ -948,8 +947,8 @@ function adminDashboard() {
             if (!data) return;
             
             // Level chart
-            if (this.charts.roleLevel) { this.charts.roleLevel.destroy(); this.charts.roleLevel = null; }
-            const levelCtx = this.resetCanvas('roleLevelChart');
+            this.destroyChart('roleLevel');
+            const levelCtx = this.getCanvas('roleLevelChart');
             if (levelCtx) {
                 
                 const levels = data.level_distribution || {};
@@ -977,8 +976,8 @@ function adminDashboard() {
             }
             
             // Block chart
-            if (this.charts.roleBlock) { this.charts.roleBlock.destroy(); this.charts.roleBlock = null; }
-            const blockCtx = this.resetCanvas('roleBlockChart');
+            this.destroyChart('roleBlock');
+            const blockCtx = this.getCanvas('roleBlockChart');
             if (blockCtx) {
                 
                 const blocks = data.block_averages || {};
@@ -1009,8 +1008,8 @@ function adminDashboard() {
         
         renderRolesComparisonChart() {
             if (!this.stats.roles) return;
-            if (this.charts.roles) { this.charts.roles.destroy(); this.charts.roles = null; }
-            const ctx = this.resetCanvas('rolesChart');
+            this.destroyChart('roles');
+            const ctx = this.getCanvas('rolesChart');
             if (!ctx) return;
             
             const roles = this.selectedRolesCompare
