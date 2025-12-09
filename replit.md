@@ -12,6 +12,19 @@ The application features a multi-agent ecosystem where specialized agents handle
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (December 2025)
+
+### Dashboard Analytics Enhancement
+- Added comprehensive analytics dashboard with 4 tabs: OAZ Global, Por Frente, Por Departamento, Por Cargo
+- Created analytics service (`app/services/analytics.py`) for data aggregation
+- New API endpoints: `/admin/stats/global`, `/admin/stats/frentes`, `/admin/stats/departments`, `/admin/stats/roles`, `/admin/stats/all`
+- Integrated Chart.js for visualizations (doughnut charts, bar charts)
+- Frente classification: @oaz.co = SOUQ, @thesaint.com.br = THESAINT
+
+### Multi-Domain Email Support
+- Updated `ALLOWED_EMAIL_DOMAINS` config to accept multiple domains (comma-separated)
+- Now accepts both @oaz.co and @thesaint.com.br email domains for user registration
+
 ## System Architecture
 
 ### Backend Framework
