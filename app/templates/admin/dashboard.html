@@ -555,9 +555,9 @@ function adminDashboard() {
                     this.selectedRolesCompare = roles.slice(0, 5);
                 }
                 
-                this.$nextTick(() => {
+                setTimeout(() => {
                     this.renderGlobalCharts();
-                });
+                }, 100);
                 
             } catch (err) {
                 console.error('Error loading data:', err);
@@ -577,12 +577,12 @@ function adminDashboard() {
         
         selectFrente(frente) {
             this.selectedFrente = frente;
-            this.$nextTick(() => this.renderFrenteCharts());
+            setTimeout(() => this.renderFrenteCharts(), 50);
         },
         
         selectDept(dept) {
             this.selectedDept = dept;
-            this.$nextTick(() => this.renderDeptCharts());
+            setTimeout(() => this.renderDeptCharts(), 50);
         },
         
         handleDeptSelect(dept) {
@@ -593,7 +593,7 @@ function adminDashboard() {
         
         selectRole(role) {
             this.selectedRole = role;
-            this.$nextTick(() => this.renderRoleCharts());
+            setTimeout(() => this.renderRoleCharts(), 50);
         },
         
         handleRoleSelect(role) {
@@ -623,7 +623,7 @@ function adminDashboard() {
             } else {
                 this.selectedDeptsCompare.splice(idx, 1);
             }
-            this.$nextTick(() => this.renderDepartmentsComparisonChart());
+            setTimeout(() => this.renderDepartmentsComparisonChart(), 50);
         },
         
         toggleRoleCompare(role) {
@@ -635,7 +635,7 @@ function adminDashboard() {
             } else {
                 this.selectedRolesCompare.splice(idx, 1);
             }
-            this.$nextTick(() => this.renderRolesComparisonChart());
+            setTimeout(() => this.renderRolesComparisonChart(), 50);
         },
         
         resetCanvas(canvasId) {
