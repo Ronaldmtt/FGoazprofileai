@@ -58,7 +58,7 @@
     </div>
 
     <!-- Global OAZ Tab -->
-    <div x-show="activeTab === 'global'" x-cloak>
+    <div x-show="activeTab === 'global'" x-cloak x-transition>
         <div class="mb-6">
             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-3 h-3 bg-indigo-600 rounded-full"></span>
@@ -126,7 +126,7 @@
     </div>
 
     <!-- Frentes Tab -->
-    <div x-show="activeTab === 'frentes'" x-cloak>
+    <div x-show="activeTab === 'frentes'" x-cloak x-transition>
         <div class="mb-6">
             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-3 h-3 bg-orange-500 rounded-full"></span>
@@ -222,7 +222,7 @@
     </div>
 
     <!-- Departments Tab -->
-    <div x-show="activeTab === 'departments'" x-cloak>
+    <div x-show="activeTab === 'departments'" x-cloak x-transition>
         <div class="mb-6">
             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-3 h-3 bg-green-500 rounded-full"></span>
@@ -365,7 +365,7 @@
     </div>
 
     <!-- Roles Tab -->
-    <div x-show="activeTab === 'roles'" x-cloak>
+    <div x-show="activeTab === 'roles'" x-cloak x-transition>
         <div class="mb-6">
             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-3 h-3 bg-pink-500 rounded-full"></span>
@@ -572,7 +572,7 @@ function adminDashboard() {
                 if (tab === 'frentes') this.renderFrenteCharts();
                 if (tab === 'departments') this.renderDeptCharts();
                 if (tab === 'roles') this.renderRoleCharts();
-            }, 50);
+            }, 150);
         },
         
         selectFrente(frente) {
@@ -638,19 +638,31 @@ function adminDashboard() {
             this.$nextTick(() => this.renderRolesComparisonChart());
         },
         
+        resetCanvas(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+            const parent = canvas.parentNode;
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = canvasId;
+            newCanvas.style.width = '100%';
+            newCanvas.style.height = '100%';
+            parent.replaceChild(newCanvas, canvas);
+            return newCanvas;
+        },
+        
         renderGlobalCharts() {
             this.renderGlobalLevelChart();
             this.renderGlobalBlockChart();
         },
         
         renderGlobalLevelChart() {
-            const ctx = document.getElementById('globalLevelChart');
-            if (!ctx || !this.stats.global) return;
-            if (ctx.offsetParent === null) return; // Canvas not visible
-            
-            const levels = this.stats.global.level_distribution || {};
+            if (!this.stats.global) return;
             
             if (this.charts.globalLevel) { this.charts.globalLevel.destroy(); this.charts.globalLevel = null; }
+            const ctx = this.resetCanvas('globalLevelChart');
+            if (!ctx) return;
+            
+            const levels = this.stats.global.level_distribution || {};
             
             this.charts.globalLevel = new Chart(ctx, {
                 type: 'doughnut',
@@ -676,13 +688,13 @@ function adminDashboard() {
         },
         
         renderGlobalBlockChart() {
-            const ctx = document.getElementById('globalBlockChart');
-            if (!ctx || !this.stats.global) return;
-            if (ctx.offsetParent === null) return; // Canvas not visible
-            
-            const blocks = this.stats.global.block_averages || {};
+            if (!this.stats.global) return;
             
             if (this.charts.globalBlock) { this.charts.globalBlock.destroy(); this.charts.globalBlock = null; }
+            const ctx = this.resetCanvas('globalBlockChart');
+            if (!ctx) return;
+            
+            const blocks = this.stats.global.block_averages || {};
             
             this.charts.globalBlock = new Chart(ctx, {
                 type: 'bar',
@@ -712,10 +724,9 @@ function adminDashboard() {
             if (!data) return;
             
             // Level chart
-            const levelCtx = document.getElementById('frenteLevelChart');
-            if (levelCtx && levelCtx.offsetParent !== null) {
-                if (this.charts.frenteLevel) { this.charts.frenteLevel.destroy(); this.charts.frenteLevel = null; }
-                
+            if (this.charts.frenteLevel) { this.charts.frenteLevel.destroy(); this.charts.frenteLevel = null; }
+            const levelCtx = this.resetCanvas('frenteLevelChart');
+            if (levelCtx) {
                 const levels = data.level_distribution || {};
                 this.charts.frenteLevel = new Chart(levelCtx, {
                     type: 'doughnut',
@@ -741,9 +752,9 @@ function adminDashboard() {
             }
             
             // Block chart
-            const blockCtx = document.getElementById('frenteBlockChart');
-            if (blockCtx && blockCtx.offsetParent !== null) {
-                if (this.charts.frenteBlock) { this.charts.frenteBlock.destroy(); this.charts.frenteBlock = null; }
+            if (this.charts.frenteBlock) { this.charts.frenteBlock.destroy(); this.charts.frenteBlock = null; }
+            const blockCtx = this.resetCanvas('frenteBlockChart');
+            if (blockCtx) {
                 
                 const blocks = data.block_averages || {};
                 this.charts.frenteBlock = new Chart(blockCtx, {
@@ -772,9 +783,10 @@ function adminDashboard() {
         },
         
         renderFrentesComparisonChart() {
-            const ctx = document.getElementById('frentesComparisonChart');
-            if (!ctx || !this.stats.frentes) return;
-            if (ctx.offsetParent === null) return; // Canvas not visible
+            if (!this.stats.frentes) return;
+            if (this.charts.frentesComparison) { this.charts.frentesComparison.destroy(); this.charts.frentesComparison = null; }
+            const ctx = this.resetCanvas('frentesComparisonChart');
+            if (!ctx) return;
             
             const frentes = Object.keys(this.stats.frentes);
             const allBlocks = new Set();
@@ -789,8 +801,6 @@ function adminDashboard() {
                 backgroundColor: idx === 0 ? '#3b82f6' : '#a855f7',
                 borderRadius: 4
             }));
-            
-            if (this.charts.frentesComparison) { this.charts.frentesComparison.destroy(); this.charts.frentesComparison = null; }
             
             this.charts.frentesComparison = new Chart(ctx, {
                 type: 'bar',
@@ -813,9 +823,9 @@ function adminDashboard() {
             if (!data) return;
             
             // Level chart
-            const levelCtx = document.getElementById('deptLevelChart');
-            if (levelCtx && levelCtx.offsetParent !== null) {
-                if (this.charts.deptLevel) { this.charts.deptLevel.destroy(); this.charts.deptLevel = null; }
+            if (this.charts.deptLevel) { this.charts.deptLevel.destroy(); this.charts.deptLevel = null; }
+            const levelCtx = this.resetCanvas('deptLevelChart');
+            if (levelCtx) {
                 
                 const levels = data.level_distribution || {};
                 this.charts.deptLevel = new Chart(levelCtx, {
@@ -842,9 +852,9 @@ function adminDashboard() {
             }
             
             // Block chart
-            const blockCtx = document.getElementById('deptBlockChart');
-            if (blockCtx && blockCtx.offsetParent !== null) {
-                if (this.charts.deptBlock) { this.charts.deptBlock.destroy(); this.charts.deptBlock = null; }
+            if (this.charts.deptBlock) { this.charts.deptBlock.destroy(); this.charts.deptBlock = null; }
+            const blockCtx = this.resetCanvas('deptBlockChart');
+            if (blockCtx) {
                 
                 const blocks = data.block_averages || {};
                 this.charts.deptBlock = new Chart(blockCtx, {
@@ -873,16 +883,15 @@ function adminDashboard() {
         },
         
         renderDepartmentsComparisonChart() {
-            const ctx = document.getElementById('departmentsChart');
-            if (!ctx || !this.stats.departments) return;
-            if (ctx.offsetParent === null) return; // Canvas not visible
+            if (!this.stats.departments) return;
+            if (this.charts.departments) { this.charts.departments.destroy(); this.charts.departments = null; }
+            const ctx = this.resetCanvas('departmentsChart');
+            if (!ctx) return;
             
             const depts = this.selectedDeptsCompare
                 .filter(d => this.stats.departments[d])
                 .map(d => [d, this.stats.departments[d]])
                 .sort((a, b) => b[1].avg_score - a[1].avg_score);
-            
-            if (this.charts.departments) { this.charts.departments.destroy(); this.charts.departments = null; }
             
             if (depts.length === 0) return;
             
@@ -913,9 +922,9 @@ function adminDashboard() {
             if (!data) return;
             
             // Level chart
-            const levelCtx = document.getElementById('roleLevelChart');
-            if (levelCtx && levelCtx.offsetParent !== null) {
-                if (this.charts.roleLevel) { this.charts.roleLevel.destroy(); this.charts.roleLevel = null; }
+            if (this.charts.roleLevel) { this.charts.roleLevel.destroy(); this.charts.roleLevel = null; }
+            const levelCtx = this.resetCanvas('roleLevelChart');
+            if (levelCtx) {
                 
                 const levels = data.level_distribution || {};
                 this.charts.roleLevel = new Chart(levelCtx, {
@@ -942,9 +951,9 @@ function adminDashboard() {
             }
             
             // Block chart
-            const blockCtx = document.getElementById('roleBlockChart');
-            if (blockCtx && blockCtx.offsetParent !== null) {
-                if (this.charts.roleBlock) { this.charts.roleBlock.destroy(); this.charts.roleBlock = null; }
+            if (this.charts.roleBlock) { this.charts.roleBlock.destroy(); this.charts.roleBlock = null; }
+            const blockCtx = this.resetCanvas('roleBlockChart');
+            if (blockCtx) {
                 
                 const blocks = data.block_averages || {};
                 this.charts.roleBlock = new Chart(blockCtx, {
@@ -973,16 +982,15 @@ function adminDashboard() {
         },
         
         renderRolesComparisonChart() {
-            const ctx = document.getElementById('rolesChart');
-            if (!ctx || !this.stats.roles) return;
-            if (ctx.offsetParent === null) return; // Canvas not visible
+            if (!this.stats.roles) return;
+            if (this.charts.roles) { this.charts.roles.destroy(); this.charts.roles = null; }
+            const ctx = this.resetCanvas('rolesChart');
+            if (!ctx) return;
             
             const roles = this.selectedRolesCompare
                 .filter(r => this.stats.roles[r])
                 .map(r => [r, this.stats.roles[r]])
                 .sort((a, b) => b[1].avg_score - a[1].avg_score);
-            
-            if (this.charts.roles) { this.charts.roles.destroy(); this.charts.roles = null; }
             
             if (roles.length === 0) return;
             
