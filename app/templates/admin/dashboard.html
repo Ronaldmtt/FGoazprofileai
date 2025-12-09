@@ -532,6 +532,27 @@ function adminDashboard() {
         roleSearch: '',
         roleCompareOpen: false,
         roleCompareSearch: '',
+        // Debounce timers
+        renderTimers: {
+            global: null,
+            frente: null,
+            dept: null,
+            role: null,
+            deptCompare: null,
+            roleCompare: null,
+            tab: null
+        },
+        
+        // Cancel previous timer and schedule new render
+        scheduleRender(key, fn, delay = 50) {
+            if (this.renderTimers[key]) {
+                clearTimeout(this.renderTimers[key]);
+            }
+            this.renderTimers[key] = setTimeout(() => {
+                fn();
+                this.renderTimers[key] = null;
+            }, delay);
+        },
         
         async loadData() {
             try {
@@ -555,9 +576,7 @@ function adminDashboard() {
                     this.selectedRolesCompare = roles.slice(0, 5);
                 }
                 
-                setTimeout(() => {
-                    this.renderGlobalCharts();
-                }, 100);
+                this.scheduleRender('global', () => this.renderGlobalCharts(), 100);
                 
             } catch (err) {
                 console.error('Error loading data:', err);
@@ -566,8 +585,15 @@ function adminDashboard() {
         
         switchTab(tab) {
             this.activeTab = tab;
-            // Use setTimeout to ensure DOM is fully updated after x-show transition
-            setTimeout(() => {
+            // Cancel all pending renders first
+            Object.keys(this.renderTimers).forEach(key => {
+                if (this.renderTimers[key]) {
+                    clearTimeout(this.renderTimers[key]);
+                    this.renderTimers[key] = null;
+                }
+            });
+            // Schedule new render with longer delay for tab switch
+            this.scheduleRender('tab', () => {
                 if (tab === 'global') this.renderGlobalCharts();
                 if (tab === 'frentes') this.renderFrenteCharts();
                 if (tab === 'departments') this.renderDeptCharts();
@@ -577,12 +603,12 @@ function adminDashboard() {
         
         selectFrente(frente) {
             this.selectedFrente = frente;
-            setTimeout(() => this.renderFrenteCharts(), 50);
+            this.scheduleRender('frente', () => this.renderFrenteCharts(), 100);
         },
         
         selectDept(dept) {
             this.selectedDept = dept;
-            setTimeout(() => this.renderDeptCharts(), 50);
+            this.scheduleRender('dept', () => this.renderDeptCharts(), 100);
         },
         
         handleDeptSelect(dept) {
@@ -593,7 +619,7 @@ function adminDashboard() {
         
         selectRole(role) {
             this.selectedRole = role;
-            setTimeout(() => this.renderRoleCharts(), 50);
+            this.scheduleRender('role', () => this.renderRoleCharts(), 100);
         },
         
         handleRoleSelect(role) {
@@ -623,7 +649,7 @@ function adminDashboard() {
             } else {
                 this.selectedDeptsCompare.splice(idx, 1);
             }
-            setTimeout(() => this.renderDepartmentsComparisonChart(), 50);
+            this.scheduleRender('deptCompare', () => this.renderDepartmentsComparisonChart(), 100);
         },
         
         toggleRoleCompare(role) {
@@ -635,7 +661,7 @@ function adminDashboard() {
             } else {
                 this.selectedRolesCompare.splice(idx, 1);
             }
-            setTimeout(() => this.renderRolesComparisonChart(), 50);
+            this.scheduleRender('roleCompare', () => this.renderRolesComparisonChart(), 100);
         },
         
         resetCanvas(canvasId) {
