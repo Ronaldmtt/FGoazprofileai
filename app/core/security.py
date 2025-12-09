@@ -15,12 +15,14 @@ def verify_token(token: str, max_age: int = 86400) -> str:
     except (SignatureExpired, BadSignature):
         return None
 
-def validate_email_domain(email: str, allowed_domain: str) -> bool:
+def validate_email_domain(email: str, allowed_domains) -> bool:
     try:
         valid = validate_email(email)
         email_normalized = valid.email
-        domain = email_normalized.split('@')[1]
-        return domain.lower() == allowed_domain.lower()
+        domain = email_normalized.split('@')[1].lower()
+        if isinstance(allowed_domains, str):
+            allowed_domains = [allowed_domains]
+        return domain in [d.strip().lower() for d in allowed_domains]
     except EmailNotValidError:
         return False
 

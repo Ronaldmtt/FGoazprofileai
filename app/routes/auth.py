@@ -28,9 +28,10 @@ def magic_link():
         data = request.get_json()
         email = data.get('email', '').strip()
         
-        if not validate_email_domain(email, Config.ALLOWED_EMAIL_DOMAIN):
+        if not validate_email_domain(email, Config.ALLOWED_EMAIL_DOMAINS):
+            domains = ', @'.join(Config.ALLOWED_EMAIL_DOMAINS)
             return jsonify({
-                'error': f'Email deve ser do domínio @{Config.ALLOWED_EMAIL_DOMAIN}'
+                'error': f'Email deve ser de um dos domínios: @{domains}'
             }), 400
         
         # Log login attempt

@@ -12,7 +12,7 @@ class Config:
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', '1') == '1'
     
     SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
-    ALLOWED_EMAIL_DOMAIN = os.getenv('ALLOWED_EMAIL_DOMAIN', 'oaz.co')
+    ALLOWED_EMAIL_DOMAINS = os.getenv('ALLOWED_EMAIL_DOMAINS', 'oaz.co,thesaint.com.br').split(',')
     BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
     
     SEED_ON_START = os.getenv('SEED_ON_START', '1') == '1'
