@@ -6,7 +6,7 @@
 <div x-data="adminDashboard()" x-init="loadData()">
     <div class="mb-8">
         <h2 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Administrativo</h2>
-        <p class="text-gray-600">Visão geral das avaliações e proficiências em IA</p>
+        <p class="text-gray-600">Visao geral das avaliacoes e proficiencias em IA</p>
     </div>
 
     <!-- Tab Navigation -->
@@ -40,9 +40,9 @@
         <div class="mb-6">
             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-3 h-3 bg-indigo-600 rounded-full"></span>
-                Média Global OAZ
+                Media Global OAZ
             </h3>
-            <p class="text-gray-600 text-sm">Estatísticas consolidadas de toda a empresa</p>
+            <p class="text-gray-600 text-sm">Estatisticas consolidadas de toda a empresa</p>
         </div>
 
         <!-- Global KPI Cards -->
@@ -52,15 +52,15 @@
                 <p class="text-4xl font-bold" x-text="stats.global?.count || '0'"></p>
             </div>
             <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
-                <p class="text-sm opacity-80 mb-1">Nota Média Global</p>
+                <p class="text-sm opacity-80 mb-1">Nota Media Global</p>
                 <p class="text-4xl font-bold" x-text="(stats.global?.avg_score || 0) + '/40'"></p>
             </div>
             <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-                <p class="text-sm opacity-80 mb-1">Nível Predominante</p>
+                <p class="text-sm opacity-80 mb-1">Nivel Predominante</p>
                 <p class="text-2xl font-bold" x-text="getPredominantLevel(stats.global?.level_distribution)"></p>
             </div>
             <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-                <p class="text-sm opacity-80 mb-1">% Avançados</p>
+                <p class="text-sm opacity-80 mb-1">% Avancados</p>
                 <p class="text-4xl font-bold" x-text="getAdvancedPercentage(stats.global) + '%'"></p>
             </div>
         </div>
@@ -69,7 +69,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <!-- Level Distribution Chart -->
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <h4 class="text-lg font-semibold text-gray-900 mb-4">Distribuição de Níveis</h4>
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">Distribuicao de Niveis</h4>
                 <div class="relative" style="height: 280px;">
                     <canvas id="globalLevelChart"></canvas>
                 </div>
@@ -77,7 +77,7 @@
 
             <!-- Block Averages Chart -->
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <h4 class="text-lg font-semibold text-gray-900 mb-4">Média por Bloco de Competência</h4>
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">Media por Bloco de Competencia</h4>
                 <div class="relative" style="height: 280px;">
                     <canvas id="globalBlockChart"></canvas>
                 </div>
@@ -86,7 +86,7 @@
 
         <!-- Block Details -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h4 class="text-lg font-semibold text-gray-900 mb-4">Pontuação Detalhada por Bloco</h4>
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Pontuacao Detalhada por Bloco</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <template x-for="(score, block) in stats.global?.block_averages || {}" :key="block">
                     <div class="bg-gray-50 rounded-lg p-4">
@@ -113,65 +113,92 @@
                 <span class="w-3 h-3 bg-orange-500 rounded-full"></span>
                 Comparativo por Frente
             </h3>
-            <p class="text-gray-600 text-sm">Estatísticas separadas por SOUQ (@oaz.co) e THESAINT (@thesaint.com.br)</p>
+            <p class="text-gray-600 text-sm">Estatisticas separadas por SOUQ (@oaz.co) e THESAINT (@thesaint.com.br)</p>
         </div>
 
-        <!-- Frentes Comparison -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Frente Selector -->
+        <div class="mb-6 flex gap-4">
             <template x-for="(data, frente) in stats.frentes || {}" :key="frente">
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-lg font-bold" :class="frente === 'SOUQ' ? 'text-blue-600' : 'text-purple-600'" x-text="frente"></h4>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium"
-                              :class="frente === 'SOUQ' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'"
-                              x-text="data.count + ' avaliados'"></span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="bg-gray-50 rounded-lg p-4 text-center">
-                            <p class="text-sm text-gray-600">Nota Média</p>
-                            <p class="text-3xl font-bold text-gray-900" x-text="data.avg_score + '/40'"></p>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-4 text-center">
-                            <p class="text-sm text-gray-600">Nível Predominante</p>
-                            <p class="text-xl font-bold" :class="getLevelTextColor(getPredominantLevel(data.level_distribution))" x-text="getPredominantLevel(data.level_distribution)"></p>
-                        </div>
-                    </div>
-
-                    <!-- Level Distribution Bars -->
-                    <div class="space-y-2 mb-4">
-                        <template x-for="level in ['Líder Digital', 'Praticante', 'Explorador', 'Iniciante']" :key="level">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs w-24 text-gray-600" x-text="level"></span>
-                                <div class="flex-1 bg-gray-200 rounded-full h-3">
-                                    <div class="h-3 rounded-full transition-all" 
-                                         :class="getLevelBarColor(level)"
-                                         :style="'width: ' + ((data.level_distribution[level] || 0) / data.count * 100) + '%'"></div>
-                                </div>
-                                <span class="text-xs font-medium w-8" x-text="data.level_distribution[level] || 0"></span>
-                            </div>
-                        </template>
-                    </div>
-
-                    <!-- Block Scores -->
-                    <div class="border-t pt-4">
-                        <p class="text-sm font-medium text-gray-700 mb-2">Média por Bloco</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <template x-for="(score, block) in data.block_averages || {}" :key="block">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 truncate" x-text="block.split(' ').slice(0,2).join(' ')"></span>
-                                    <span class="font-medium" x-text="score + ' pts'"></span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
+                <button @click="selectedFrente = frente"
+                        :class="selectedFrente === frente ? 
+                            (frente === 'SOUQ' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white') : 
+                            'bg-white text-gray-700 hover:bg-gray-100'"
+                        class="px-6 py-3 rounded-lg font-medium shadow transition-all">
+                    <span x-text="frente"></span>
+                    <span class="ml-2 opacity-70" x-text="'(' + data.count + ')'"></span>
+                </button>
             </template>
         </div>
 
+        <!-- Selected Frente Full Dashboard -->
+        <template x-for="(data, frente) in stats.frentes || {}" :key="'frente-detail-' + frente">
+            <div x-show="selectedFrente === frente" x-cloak>
+                <!-- Frente KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div :class="frente === 'SOUQ' ? 'from-blue-500 to-blue-600' : 'from-purple-500 to-purple-600'" 
+                         class="bg-gradient-to-br rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Total de Avaliados</p>
+                        <p class="text-4xl font-bold" x-text="data.count || '0'"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Nota Media</p>
+                        <p class="text-4xl font-bold" x-text="(data.avg_score || 0) + '/40'"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Nivel Predominante</p>
+                        <p class="text-2xl font-bold" x-text="getPredominantLevel(data.level_distribution)"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">% Avancados</p>
+                        <p class="text-4xl font-bold" x-text="getAdvancedPercentage(data) + '%'"></p>
+                    </div>
+                </div>
+
+                <!-- Frente Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Level Distribution Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Distribuicao de Niveis - <span x-text="frente"></span></h4>
+                        <div class="relative" style="height: 280px;">
+                            <canvas :id="'frenteLevelChart_' + frente"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Block Averages Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Media por Bloco - <span x-text="frente"></span></h4>
+                        <div class="relative" style="height: 280px;">
+                            <canvas :id="'frenteBlockChart_' + frente"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block Details -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Pontuacao Detalhada por Bloco - <span x-text="frente"></span></h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <template x-for="(score, block) in data.block_averages || {}" :key="block">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs font-medium text-gray-600 mb-2" x-text="block"></p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-bold" :class="getBlockScoreColor(score)" x-text="score"></span>
+                                    <span class="text-sm text-gray-500">/12 pts</span>
+                                </div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full transition-all" 
+                                         :class="getBlockScoreBarColor(score)"
+                                         :style="'width: ' + (score / 12 * 100) + '%'"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
         <!-- Frentes Comparison Chart -->
         <div class="bg-white rounded-xl shadow-lg p-6">
-            <h4 class="text-lg font-semibold text-gray-900 mb-4">Comparativo de Blocos por Frente</h4>
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Comparativo de Blocos entre Frentes</h4>
             <div class="relative" style="height: 320px;">
                 <canvas id="frentesComparisonChart"></canvas>
             </div>
@@ -183,50 +210,87 @@
         <div class="mb-6">
             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                Estatísticas por Departamento
+                Estatisticas por Departamento
             </h3>
-            <p class="text-gray-600 text-sm">Média de todas as avaliações agrupadas por departamento</p>
+            <p class="text-gray-600 text-sm">Media de todas as avaliacoes agrupadas por departamento</p>
         </div>
 
-        <!-- Department Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Department Selector -->
+        <div class="mb-6 flex flex-wrap gap-3">
             <template x-for="(data, dept) in stats.departments || {}" :key="dept">
-                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-lg font-bold text-gray-900" x-text="dept"></h4>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium" x-text="data.count + ' pessoas'"></span>
+                <button @click="selectedDept = dept"
+                        :class="selectedDept === dept ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                        class="px-4 py-2 rounded-lg font-medium shadow transition-all text-sm">
+                    <span x-text="dept"></span>
+                    <span class="ml-1 opacity-70" x-text="'(' + data.count + ')'"></span>
+                </button>
+            </template>
+        </div>
+
+        <!-- Selected Department Full Dashboard -->
+        <template x-for="(data, dept) in stats.departments || {}" :key="'dept-detail-' + dept">
+            <div x-show="selectedDept === dept" x-cloak>
+                <!-- Department KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Total de Avaliados</p>
+                        <p class="text-4xl font-bold" x-text="data.count || '0'"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Nota Media</p>
+                        <p class="text-4xl font-bold" x-text="(data.avg_score || 0) + '/40'"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Nivel Predominante</p>
+                        <p class="text-2xl font-bold" x-text="getPredominantLevel(data.level_distribution)"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-lime-500 to-lime-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">% Avancados</p>
+                        <p class="text-4xl font-bold" x-text="getAdvancedPercentage(data) + '%'"></p>
+                    </div>
+                </div>
+
+                <!-- Department Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Level Distribution Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Distribuicao de Niveis - <span x-text="dept"></span></h4>
+                        <div class="relative" style="height: 280px;">
+                            <canvas :id="'deptLevelChart_' + dept.replace(/\\s+/g, '_')"></canvas>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-6 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Nota Média</p>
-                            <p class="text-2xl font-bold" :class="getScoreColor(data.avg_score)" x-text="data.avg_score + '/40'"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Nível</p>
-                            <span class="inline-block px-2 py-1 rounded-full text-sm font-medium"
-                                  :class="getLevelBadgeColor(getPredominantLevel(data.level_distribution))"
-                                  x-text="getPredominantLevel(data.level_distribution)"></span>
+                    <!-- Block Averages Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Media por Bloco - <span x-text="dept"></span></h4>
+                        <div class="relative" style="height: 280px;">
+                            <canvas :id="'deptBlockChart_' + dept.replace(/\\s+/g, '_')"></canvas>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Block Mini Chart -->
-                    <div class="space-y-2">
+                <!-- Block Details -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Pontuacao Detalhada por Bloco - <span x-text="dept"></span></h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <template x-for="(score, block) in data.block_averages || {}" :key="block">
-                            <div>
-                                <div class="flex justify-between text-xs mb-1">
-                                    <span class="text-gray-600" x-text="block"></span>
-                                    <span class="font-medium" x-text="score + '/12'"></span>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs font-medium text-gray-600 mb-2" x-text="block"></p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-bold" :class="getBlockScoreColor(score)" x-text="score"></span>
+                                    <span class="text-sm text-gray-500">/12 pts</span>
                                 </div>
-                                <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                    <div class="h-1.5 rounded-full bg-green-500" :style="'width: ' + (score / 12 * 100) + '%'"></div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full transition-all" 
+                                         :class="getBlockScoreBarColor(score)"
+                                         :style="'width: ' + (score / 12 * 100) + '%'"></div>
                                 </div>
                             </div>
                         </template>
                     </div>
                 </div>
-            </template>
-        </div>
+            </div>
+        </template>
 
         <!-- Department Comparison Chart -->
         <div class="bg-white rounded-xl shadow-lg p-6">
@@ -242,50 +306,87 @@
         <div class="mb-6">
             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-3 h-3 bg-pink-500 rounded-full"></span>
-                Estatísticas por Cargo
+                Estatisticas por Cargo
             </h3>
-            <p class="text-gray-600 text-sm">Média de todas as avaliações agrupadas por cargo</p>
+            <p class="text-gray-600 text-sm">Media de todas as avaliacoes agrupadas por cargo</p>
         </div>
 
-        <!-- Role Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Role Selector -->
+        <div class="mb-6 flex flex-wrap gap-3">
             <template x-for="(data, role) in stats.roles || {}" :key="role">
-                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-lg font-bold text-gray-900" x-text="role"></h4>
-                        <span class="px-2 py-1 bg-pink-100 text-pink-800 rounded-full text-xs font-medium" x-text="data.count + ' pessoas'"></span>
+                <button @click="selectedRole = role"
+                        :class="selectedRole === role ? 'bg-pink-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                        class="px-4 py-2 rounded-lg font-medium shadow transition-all text-sm">
+                    <span x-text="role"></span>
+                    <span class="ml-1 opacity-70" x-text="'(' + data.count + ')'"></span>
+                </button>
+            </template>
+        </div>
+
+        <!-- Selected Role Full Dashboard -->
+        <template x-for="(data, role) in stats.roles || {}" :key="'role-detail-' + role">
+            <div x-show="selectedRole === role" x-cloak>
+                <!-- Role KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Total de Avaliados</p>
+                        <p class="text-4xl font-bold" x-text="data.count || '0'"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Nota Media</p>
+                        <p class="text-4xl font-bold" x-text="(data.avg_score || 0) + '/40'"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-fuchsia-500 to-fuchsia-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">Nivel Predominante</p>
+                        <p class="text-2xl font-bold" x-text="getPredominantLevel(data.level_distribution)"></p>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                        <p class="text-sm opacity-80 mb-1">% Avancados</p>
+                        <p class="text-4xl font-bold" x-text="getAdvancedPercentage(data) + '%'"></p>
+                    </div>
+                </div>
+
+                <!-- Role Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Level Distribution Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Distribuicao de Niveis - <span x-text="role"></span></h4>
+                        <div class="relative" style="height: 280px;">
+                            <canvas :id="'roleLevelChart_' + role.replace(/\\s+/g, '_')"></canvas>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-6 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Nota Média</p>
-                            <p class="text-2xl font-bold" :class="getScoreColor(data.avg_score)" x-text="data.avg_score + '/40'"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Nível</p>
-                            <span class="inline-block px-2 py-1 rounded-full text-sm font-medium"
-                                  :class="getLevelBadgeColor(getPredominantLevel(data.level_distribution))"
-                                  x-text="getPredominantLevel(data.level_distribution)"></span>
+                    <!-- Block Averages Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Media por Bloco - <span x-text="role"></span></h4>
+                        <div class="relative" style="height: 280px;">
+                            <canvas :id="'roleBlockChart_' + role.replace(/\\s+/g, '_')"></canvas>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Block Mini Chart -->
-                    <div class="space-y-2">
+                <!-- Block Details -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Pontuacao Detalhada por Bloco - <span x-text="role"></span></h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <template x-for="(score, block) in data.block_averages || {}" :key="block">
-                            <div>
-                                <div class="flex justify-between text-xs mb-1">
-                                    <span class="text-gray-600" x-text="block"></span>
-                                    <span class="font-medium" x-text="score + '/12'"></span>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs font-medium text-gray-600 mb-2" x-text="block"></p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-bold" :class="getBlockScoreColor(score)" x-text="score"></span>
+                                    <span class="text-sm text-gray-500">/12 pts</span>
                                 </div>
-                                <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                    <div class="h-1.5 rounded-full bg-pink-500" :style="'width: ' + (score / 12 * 100) + '%'"></div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full transition-all" 
+                                         :class="getBlockScoreBarColor(score)"
+                                         :style="'width: ' + (score / 12 * 100) + '%'"></div>
                                 </div>
                             </div>
                         </template>
                     </div>
                 </div>
-            </template>
-        </div>
+            </div>
+        </template>
 
         <!-- Role Comparison Chart -->
         <div class="bg-white rounded-xl shadow-lg p-6">
@@ -299,10 +400,10 @@
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <div class="bg-white rounded-xl shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Acoes Rapidas</h3>
             <div class="space-y-3">
                 <a href="/admin/users" class="block w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition text-center font-medium">
-                    Ver Lista de Usuários
+                    Ver Lista de Usuarios
                 </a>
             </div>
         </div>
@@ -331,6 +432,9 @@ function adminDashboard() {
     return {
         stats: {},
         activeTab: 'global',
+        selectedFrente: null,
+        selectedDept: null,
+        selectedRole: null,
         charts: {},
         
         async loadData() {
@@ -338,9 +442,41 @@ function adminDashboard() {
                 const res = await fetch('/admin/stats/all');
                 this.stats = await res.json();
                 
+                // Set default selections
+                if (this.stats.frentes) {
+                    this.selectedFrente = Object.keys(this.stats.frentes)[0];
+                }
+                if (this.stats.departments) {
+                    this.selectedDept = Object.keys(this.stats.departments)[0];
+                }
+                if (this.stats.roles) {
+                    this.selectedRole = Object.keys(this.stats.roles)[0];
+                }
+                
                 this.$nextTick(() => {
                     this.renderCharts();
                 });
+                
+                // Watch for tab changes to render charts
+                this.$watch('activeTab', (tab) => {
+                    this.$nextTick(() => {
+                        if (tab === 'frentes') this.renderFrenteCharts();
+                        if (tab === 'departments') this.renderDeptCharts();
+                        if (tab === 'roles') this.renderRoleCharts();
+                    });
+                });
+                
+                // Watch for selection changes
+                this.$watch('selectedFrente', () => {
+                    this.$nextTick(() => this.renderFrenteCharts());
+                });
+                this.$watch('selectedDept', () => {
+                    this.$nextTick(() => this.renderDeptCharts());
+                });
+                this.$watch('selectedRole', () => {
+                    this.$nextTick(() => this.renderRoleCharts());
+                });
+                
             } catch (err) {
                 console.error('Error loading data:', err);
             }
@@ -358,7 +494,7 @@ function adminDashboard() {
             const ctx = document.getElementById('globalLevelChart');
             if (!ctx || !this.stats.global) return;
             
-            const levels = this.stats.global.level_distribution;
+            const levels = this.stats.global.level_distribution || {};
             
             if (this.charts.globalLevel) this.charts.globalLevel.destroy();
             
@@ -404,7 +540,7 @@ function adminDashboard() {
                 data: {
                     labels: labels.map(l => l.length > 20 ? l.substring(0, 20) + '...' : l),
                     datasets: [{
-                        label: 'Pontuação Média',
+                        label: 'Pontuacao Media',
                         data: data,
                         backgroundColor: '#6366f1',
                         borderRadius: 6
@@ -425,6 +561,205 @@ function adminDashboard() {
                     }
                 }
             });
+        },
+        
+        renderFrenteCharts() {
+            if (!this.selectedFrente || !this.stats.frentes) return;
+            
+            const data = this.stats.frentes[this.selectedFrente];
+            if (!data) return;
+            
+            // Level chart
+            const levelCtx = document.getElementById('frenteLevelChart_' + this.selectedFrente);
+            if (levelCtx) {
+                const chartKey = 'frenteLevel_' + this.selectedFrente;
+                if (this.charts[chartKey]) this.charts[chartKey].destroy();
+                
+                const levels = data.level_distribution || {};
+                this.charts[chartKey] = new Chart(levelCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Líder Digital', 'Praticante', 'Explorador', 'Iniciante'],
+                        datasets: [{
+                            data: [
+                                levels['Líder Digital'] || 0,
+                                levels['Praticante'] || 0,
+                                levels['Explorador'] || 0,
+                                levels['Iniciante'] || 0
+                            ],
+                            backgroundColor: ['#7c3aed', '#10b981', '#3b82f6', '#f97316'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+            
+            // Block chart
+            const blockCtx = document.getElementById('frenteBlockChart_' + this.selectedFrente);
+            if (blockCtx) {
+                const chartKey = 'frenteBlock_' + this.selectedFrente;
+                if (this.charts[chartKey]) this.charts[chartKey].destroy();
+                
+                const blocks = data.block_averages || {};
+                this.charts[chartKey] = new Chart(blockCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(blocks).map(l => l.length > 20 ? l.substring(0, 20) + '...' : l),
+                        datasets: [{
+                            label: 'Pontuacao',
+                            data: Object.values(blocks),
+                            backgroundColor: this.selectedFrente === 'SOUQ' ? '#3b82f6' : '#a855f7',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: { x: { beginAtZero: true, max: 12 } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        },
+        
+        renderDeptCharts() {
+            if (!this.selectedDept || !this.stats.departments) return;
+            
+            const data = this.stats.departments[this.selectedDept];
+            if (!data) return;
+            
+            const deptKey = this.selectedDept.replace(/\s+/g, '_');
+            
+            // Level chart
+            const levelCtx = document.getElementById('deptLevelChart_' + deptKey);
+            if (levelCtx) {
+                const chartKey = 'deptLevel_' + deptKey;
+                if (this.charts[chartKey]) this.charts[chartKey].destroy();
+                
+                const levels = data.level_distribution || {};
+                this.charts[chartKey] = new Chart(levelCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Líder Digital', 'Praticante', 'Explorador', 'Iniciante'],
+                        datasets: [{
+                            data: [
+                                levels['Líder Digital'] || 0,
+                                levels['Praticante'] || 0,
+                                levels['Explorador'] || 0,
+                                levels['Iniciante'] || 0
+                            ],
+                            backgroundColor: ['#7c3aed', '#10b981', '#3b82f6', '#f97316'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+            
+            // Block chart
+            const blockCtx = document.getElementById('deptBlockChart_' + deptKey);
+            if (blockCtx) {
+                const chartKey = 'deptBlock_' + deptKey;
+                if (this.charts[chartKey]) this.charts[chartKey].destroy();
+                
+                const blocks = data.block_averages || {};
+                this.charts[chartKey] = new Chart(blockCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(blocks).map(l => l.length > 20 ? l.substring(0, 20) + '...' : l),
+                        datasets: [{
+                            label: 'Pontuacao',
+                            data: Object.values(blocks),
+                            backgroundColor: '#10b981',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: { x: { beginAtZero: true, max: 12 } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        },
+        
+        renderRoleCharts() {
+            if (!this.selectedRole || !this.stats.roles) return;
+            
+            const data = this.stats.roles[this.selectedRole];
+            if (!data) return;
+            
+            const roleKey = this.selectedRole.replace(/\s+/g, '_');
+            
+            // Level chart
+            const levelCtx = document.getElementById('roleLevelChart_' + roleKey);
+            if (levelCtx) {
+                const chartKey = 'roleLevel_' + roleKey;
+                if (this.charts[chartKey]) this.charts[chartKey].destroy();
+                
+                const levels = data.level_distribution || {};
+                this.charts[chartKey] = new Chart(levelCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Líder Digital', 'Praticante', 'Explorador', 'Iniciante'],
+                        datasets: [{
+                            data: [
+                                levels['Líder Digital'] || 0,
+                                levels['Praticante'] || 0,
+                                levels['Explorador'] || 0,
+                                levels['Iniciante'] || 0
+                            ],
+                            backgroundColor: ['#7c3aed', '#10b981', '#3b82f6', '#f97316'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+            
+            // Block chart
+            const blockCtx = document.getElementById('roleBlockChart_' + roleKey);
+            if (blockCtx) {
+                const chartKey = 'roleBlock_' + roleKey;
+                if (this.charts[chartKey]) this.charts[chartKey].destroy();
+                
+                const blocks = data.block_averages || {};
+                this.charts[chartKey] = new Chart(blockCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(blocks).map(l => l.length > 20 ? l.substring(0, 20) + '...' : l),
+                        datasets: [{
+                            label: 'Pontuacao',
+                            data: Object.values(blocks),
+                            backgroundColor: '#ec4899',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: { x: { beginAtZero: true, max: 12 } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
         },
         
         renderFrentesComparisonChart() {
@@ -480,7 +815,7 @@ function adminDashboard() {
                 data: {
                     labels: depts.map(d => d[0]),
                     datasets: [{
-                        label: 'Nota Média',
+                        label: 'Nota Media',
                         data: depts.map(d => d[1].avg_score),
                         backgroundColor: '#10b981',
                         borderRadius: 6
@@ -516,7 +851,7 @@ function adminDashboard() {
                 data: {
                     labels: roles.map(r => r[0]),
                     datasets: [{
-                        label: 'Nota Média',
+                        label: 'Nota Media',
                         data: roles.map(r => r[1].avg_score),
                         backgroundColor: '#ec4899',
                         borderRadius: 6
@@ -540,16 +875,35 @@ function adminDashboard() {
         
         getPredominantLevel(distribution) {
             if (!distribution) return 'N/A';
-            const entries = Object.entries(distribution);
-            if (entries.length === 0) return 'N/A';
-            const max = entries.reduce((a, b) => a[1] > b[1] ? a : b);
-            return max[1] > 0 ? max[0] : 'N/A';
+            let max = 0;
+            let level = 'N/A';
+            for (const [l, count] of Object.entries(distribution)) {
+                if (count > max) {
+                    max = count;
+                    level = l;
+                }
+            }
+            return level;
         },
         
         getAdvancedPercentage(data) {
-            if (!data || !data.level_distribution || data.count === 0) return 0;
+            if (!data || !data.level_distribution || !data.count) return 0;
             const advanced = (data.level_distribution['Praticante'] || 0) + (data.level_distribution['Líder Digital'] || 0);
-            return Math.round(advanced / data.count * 100);
+            return Math.round((advanced / data.count) * 100);
+        },
+        
+        getBlockScoreColor(score) {
+            if (score >= 9) return 'text-green-600';
+            if (score >= 6) return 'text-blue-600';
+            if (score >= 4) return 'text-yellow-600';
+            return 'text-red-600';
+        },
+        
+        getBlockScoreBarColor(score) {
+            if (score >= 9) return 'bg-green-500';
+            if (score >= 6) return 'bg-blue-500';
+            if (score >= 4) return 'bg-yellow-500';
+            return 'bg-red-500';
         },
         
         getScoreColor(score) {
@@ -557,20 +911,6 @@ function adminDashboard() {
             if (score >= 28) return 'text-green-600';
             if (score >= 18) return 'text-blue-600';
             return 'text-orange-600';
-        },
-        
-        getBlockScoreColor(score) {
-            if (score >= 10) return 'text-purple-600';
-            if (score >= 7) return 'text-green-600';
-            if (score >= 4) return 'text-blue-600';
-            return 'text-orange-600';
-        },
-        
-        getBlockScoreBarColor(score) {
-            if (score >= 10) return 'bg-purple-500';
-            if (score >= 7) return 'bg-green-500';
-            if (score >= 4) return 'bg-blue-500';
-            return 'bg-orange-500';
         },
         
         getLevelTextColor(level) {
@@ -583,16 +923,6 @@ function adminDashboard() {
             return colors[level] || 'text-gray-600';
         },
         
-        getLevelBarColor(level) {
-            const colors = {
-                'Líder Digital': 'bg-purple-500',
-                'Praticante': 'bg-green-500',
-                'Explorador': 'bg-blue-500',
-                'Iniciante': 'bg-orange-500'
-            };
-            return colors[level] || 'bg-gray-400';
-        },
-        
         getLevelBadgeColor(level) {
             const colors = {
                 'Líder Digital': 'bg-purple-100 text-purple-800',
@@ -601,6 +931,16 @@ function adminDashboard() {
                 'Iniciante': 'bg-orange-100 text-orange-800'
             };
             return colors[level] || 'bg-gray-100 text-gray-800';
+        },
+        
+        getLevelBarColor(level) {
+            const colors = {
+                'Líder Digital': 'bg-purple-500',
+                'Praticante': 'bg-green-500',
+                'Explorador': 'bg-blue-500',
+                'Iniciante': 'bg-orange-500'
+            };
+            return colors[level] || 'bg-gray-500';
         }
     }
 }
