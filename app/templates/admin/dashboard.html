@@ -566,21 +566,13 @@ function adminDashboard() {
         
         switchTab(tab) {
             this.activeTab = tab;
-            this.$nextTick(() => {
+            // Use setTimeout to ensure DOM is fully updated after x-show transition
+            setTimeout(() => {
                 if (tab === 'global') this.renderGlobalCharts();
-                if (tab === 'frentes') {
-                    this.renderFrenteCharts();
-                    this.renderFrentesComparisonChart();
-                }
-                if (tab === 'departments') {
-                    this.renderDeptCharts();
-                    this.renderDepartmentsComparisonChart();
-                }
-                if (tab === 'roles') {
-                    this.renderRoleCharts();
-                    this.renderRolesComparisonChart();
-                }
-            });
+                if (tab === 'frentes') this.renderFrenteCharts();
+                if (tab === 'departments') this.renderDeptCharts();
+                if (tab === 'roles') this.renderRoleCharts();
+            }, 50);
         },
         
         selectFrente(frente) {
@@ -654,10 +646,11 @@ function adminDashboard() {
         renderGlobalLevelChart() {
             const ctx = document.getElementById('globalLevelChart');
             if (!ctx || !this.stats.global) return;
+            if (ctx.offsetParent === null) return; // Canvas not visible
             
             const levels = this.stats.global.level_distribution || {};
             
-            if (this.charts.globalLevel) this.charts.globalLevel.destroy();
+            if (this.charts.globalLevel) { this.charts.globalLevel.destroy(); this.charts.globalLevel = null; }
             
             this.charts.globalLevel = new Chart(ctx, {
                 type: 'doughnut',
@@ -685,10 +678,11 @@ function adminDashboard() {
         renderGlobalBlockChart() {
             const ctx = document.getElementById('globalBlockChart');
             if (!ctx || !this.stats.global) return;
+            if (ctx.offsetParent === null) return; // Canvas not visible
             
             const blocks = this.stats.global.block_averages || {};
             
-            if (this.charts.globalBlock) this.charts.globalBlock.destroy();
+            if (this.charts.globalBlock) { this.charts.globalBlock.destroy(); this.charts.globalBlock = null; }
             
             this.charts.globalBlock = new Chart(ctx, {
                 type: 'bar',
@@ -719,8 +713,8 @@ function adminDashboard() {
             
             // Level chart
             const levelCtx = document.getElementById('frenteLevelChart');
-            if (levelCtx) {
-                if (this.charts.frenteLevel) this.charts.frenteLevel.destroy();
+            if (levelCtx && levelCtx.offsetParent !== null) {
+                if (this.charts.frenteLevel) { this.charts.frenteLevel.destroy(); this.charts.frenteLevel = null; }
                 
                 const levels = data.level_distribution || {};
                 this.charts.frenteLevel = new Chart(levelCtx, {
@@ -748,8 +742,8 @@ function adminDashboard() {
             
             // Block chart
             const blockCtx = document.getElementById('frenteBlockChart');
-            if (blockCtx) {
-                if (this.charts.frenteBlock) this.charts.frenteBlock.destroy();
+            if (blockCtx && blockCtx.offsetParent !== null) {
+                if (this.charts.frenteBlock) { this.charts.frenteBlock.destroy(); this.charts.frenteBlock = null; }
                 
                 const blocks = data.block_averages || {};
                 this.charts.frenteBlock = new Chart(blockCtx, {
@@ -780,6 +774,7 @@ function adminDashboard() {
         renderFrentesComparisonChart() {
             const ctx = document.getElementById('frentesComparisonChart');
             if (!ctx || !this.stats.frentes) return;
+            if (ctx.offsetParent === null) return; // Canvas not visible
             
             const frentes = Object.keys(this.stats.frentes);
             const allBlocks = new Set();
@@ -795,7 +790,7 @@ function adminDashboard() {
                 borderRadius: 4
             }));
             
-            if (this.charts.frentesComparison) this.charts.frentesComparison.destroy();
+            if (this.charts.frentesComparison) { this.charts.frentesComparison.destroy(); this.charts.frentesComparison = null; }
             
             this.charts.frentesComparison = new Chart(ctx, {
                 type: 'bar',
@@ -819,8 +814,8 @@ function adminDashboard() {
             
             // Level chart
             const levelCtx = document.getElementById('deptLevelChart');
-            if (levelCtx) {
-                if (this.charts.deptLevel) this.charts.deptLevel.destroy();
+            if (levelCtx && levelCtx.offsetParent !== null) {
+                if (this.charts.deptLevel) { this.charts.deptLevel.destroy(); this.charts.deptLevel = null; }
                 
                 const levels = data.level_distribution || {};
                 this.charts.deptLevel = new Chart(levelCtx, {
@@ -848,8 +843,8 @@ function adminDashboard() {
             
             // Block chart
             const blockCtx = document.getElementById('deptBlockChart');
-            if (blockCtx) {
-                if (this.charts.deptBlock) this.charts.deptBlock.destroy();
+            if (blockCtx && blockCtx.offsetParent !== null) {
+                if (this.charts.deptBlock) { this.charts.deptBlock.destroy(); this.charts.deptBlock = null; }
                 
                 const blocks = data.block_averages || {};
                 this.charts.deptBlock = new Chart(blockCtx, {
@@ -880,13 +875,14 @@ function adminDashboard() {
         renderDepartmentsComparisonChart() {
             const ctx = document.getElementById('departmentsChart');
             if (!ctx || !this.stats.departments) return;
+            if (ctx.offsetParent === null) return; // Canvas not visible
             
             const depts = this.selectedDeptsCompare
                 .filter(d => this.stats.departments[d])
                 .map(d => [d, this.stats.departments[d]])
                 .sort((a, b) => b[1].avg_score - a[1].avg_score);
             
-            if (this.charts.departments) this.charts.departments.destroy();
+            if (this.charts.departments) { this.charts.departments.destroy(); this.charts.departments = null; }
             
             if (depts.length === 0) return;
             
@@ -918,8 +914,8 @@ function adminDashboard() {
             
             // Level chart
             const levelCtx = document.getElementById('roleLevelChart');
-            if (levelCtx) {
-                if (this.charts.roleLevel) this.charts.roleLevel.destroy();
+            if (levelCtx && levelCtx.offsetParent !== null) {
+                if (this.charts.roleLevel) { this.charts.roleLevel.destroy(); this.charts.roleLevel = null; }
                 
                 const levels = data.level_distribution || {};
                 this.charts.roleLevel = new Chart(levelCtx, {
@@ -947,8 +943,8 @@ function adminDashboard() {
             
             // Block chart
             const blockCtx = document.getElementById('roleBlockChart');
-            if (blockCtx) {
-                if (this.charts.roleBlock) this.charts.roleBlock.destroy();
+            if (blockCtx && blockCtx.offsetParent !== null) {
+                if (this.charts.roleBlock) { this.charts.roleBlock.destroy(); this.charts.roleBlock = null; }
                 
                 const blocks = data.block_averages || {};
                 this.charts.roleBlock = new Chart(blockCtx, {
@@ -979,13 +975,14 @@ function adminDashboard() {
         renderRolesComparisonChart() {
             const ctx = document.getElementById('rolesChart');
             if (!ctx || !this.stats.roles) return;
+            if (ctx.offsetParent === null) return; // Canvas not visible
             
             const roles = this.selectedRolesCompare
                 .filter(r => this.stats.roles[r])
                 .map(r => [r, this.stats.roles[r]])
                 .sort((a, b) => b[1].avg_score - a[1].avg_score);
             
-            if (this.charts.roles) this.charts.roles.destroy();
+            if (this.charts.roles) { this.charts.roles.destroy(); this.charts.roles = null; }
             
             if (roles.length === 0) return;
             
