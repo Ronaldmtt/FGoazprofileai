@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, render_template, send_file, sessi
 from app.models import User, Session, Item, Response, ProficiencySnapshot
 from app.agents.content_qa import AgentContentQA
 from app.services.exporter import export_to_csv, export_to_xlsx
+from app.services.analytics import get_global_stats, get_frente_stats, get_department_stats, get_role_stats, get_complete_dashboard_data
 from app.core.utils import log_audit
 from app.core.scoring import IRTScorer
 from app import db
@@ -475,3 +476,33 @@ def export_xlsx():
     )
     
     return send_file(filepath, as_attachment=True, download_name='oaz_profiler_export.xlsx')
+
+@bp.route('/stats/global', methods=['GET'])
+@require_admin
+def stats_global():
+    """Get global OAZ statistics."""
+    return jsonify(get_global_stats())
+
+@bp.route('/stats/frentes', methods=['GET'])
+@require_admin
+def stats_frentes():
+    """Get statistics by frente (SOUQ, THESAINT)."""
+    return jsonify(get_frente_stats())
+
+@bp.route('/stats/departments', methods=['GET'])
+@require_admin
+def stats_departments():
+    """Get statistics by department."""
+    return jsonify(get_department_stats())
+
+@bp.route('/stats/roles', methods=['GET'])
+@require_admin
+def stats_roles():
+    """Get statistics by role/cargo."""
+    return jsonify(get_role_stats())
+
+@bp.route('/stats/all', methods=['GET'])
+@require_admin
+def stats_all():
+    """Get complete dashboard statistics."""
+    return jsonify(get_complete_dashboard_data())
