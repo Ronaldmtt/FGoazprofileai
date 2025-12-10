@@ -451,6 +451,8 @@ def delete_item(item_id):
 @require_admin
 def export_csv():
     """Export assessment results to CSV with optional filters."""
+    from flask import Response
+    
     frente = request.args.get('frente')
     department = request.args.get('department')
     role = request.args.get('role')
@@ -477,7 +479,19 @@ def export_csv():
         payload={'frente': frente, 'department': department, 'role': role}
     )
     
-    return send_file(filepath, as_attachment=True, download_name=filename, mimetype='text/csv')
+    with open(filepath, 'rb') as f:
+        csv_content = f.read()
+    
+    response = Response(
+        csv_content,
+        mimetype='text/csv; charset=utf-8',
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"',
+            'Content-Length': str(len(csv_content)),
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
+    )
+    return response
 
 @bp.route('/export.xlsx', methods=['GET'])
 @require_admin
