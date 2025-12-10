@@ -477,7 +477,7 @@ def export_csv():
         payload={'frente': frente, 'department': department, 'role': role}
     )
     
-    return send_file(filepath, as_attachment=True, download_name=filename)
+    return send_file(filepath, as_attachment=True, download_name=filename, mimetype='text/csv')
 
 @bp.route('/export.xlsx', methods=['GET'])
 @require_admin
