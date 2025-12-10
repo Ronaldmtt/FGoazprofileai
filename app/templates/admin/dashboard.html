@@ -31,13 +31,14 @@
         
         <div class="bg-white rounded-xl shadow-lg p-4">
             <h3 class="text-lg font-semibold text-gray-900 mb-3">Exportar Dados</h3>
+            <p class="text-sm text-gray-500 mb-2" x-text="getExportDescription()"></p>
             <div class="flex gap-3">
-                <a href="/admin/export.csv" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition text-center font-medium">
+                <button @click="downloadCSV()" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition text-center font-medium">
                     Download CSV
-                </a>
-                <a href="/admin/export.xlsx" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition text-center font-medium">
+                </button>
+                <button @click="downloadExcel()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition text-center font-medium">
                     Download Excel
-                </a>
+                </button>
             </div>
         </div>
     </div>
@@ -1108,6 +1109,45 @@ function adminDashboard() {
             if (score >= 6) return 'bg-blue-500';
             if (score >= 4) return 'bg-yellow-500';
             return 'bg-red-500';
+        },
+        
+        getExportParams() {
+            const params = new URLSearchParams();
+            
+            if (this.activeTab === 'frentes' && this.selectedFrente) {
+                params.set('frente', this.selectedFrente);
+            } else if (this.activeTab === 'departments' && this.selectedDept) {
+                params.set('department', this.selectedDept);
+            } else if (this.activeTab === 'roles' && this.selectedRole) {
+                params.set('role', this.selectedRole);
+            }
+            
+            return params.toString();
+        },
+        
+        getExportDescription() {
+            if (this.activeTab === 'global') {
+                return 'Exportar todos os dados (OAZ Global)';
+            } else if (this.activeTab === 'frentes' && this.selectedFrente) {
+                return `Exportar dados da frente: ${this.selectedFrente}`;
+            } else if (this.activeTab === 'departments' && this.selectedDept) {
+                return `Exportar dados do departamento: ${this.selectedDept}`;
+            } else if (this.activeTab === 'roles' && this.selectedRole) {
+                return `Exportar dados do cargo: ${this.selectedRole}`;
+            }
+            return 'Exportar todos os dados';
+        },
+        
+        downloadCSV() {
+            const params = this.getExportParams();
+            const url = '/admin/export.csv' + (params ? '?' + params : '');
+            window.location.href = url;
+        },
+        
+        downloadExcel() {
+            const params = this.getExportParams();
+            const url = '/admin/export.xlsx' + (params ? '?' + params : '');
+            window.location.href = url;
         }
     }
 }

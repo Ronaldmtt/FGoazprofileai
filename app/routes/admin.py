@@ -450,32 +450,66 @@ def delete_item(item_id):
 @bp.route('/export.csv', methods=['GET'])
 @require_admin
 def export_csv():
-    """Export assessment results to CSV."""
-    filepath = export_to_csv()
+    """Export assessment results to CSV with optional filters."""
+    frente = request.args.get('frente')
+    department = request.args.get('department')
+    role = request.args.get('role')
+    
+    filepath = export_to_csv(frente=frente, department=department, role=role)
+    
+    filter_parts = []
+    if frente:
+        filter_parts.append(frente.lower())
+    if department:
+        filter_parts.append(department.lower().replace(' ', '_'))
+    if role:
+        filter_parts.append(role.lower().replace(' ', '_'))
+    
+    filename = 'oaz_profiler'
+    if filter_parts:
+        filename += '_' + '_'.join(filter_parts)
+    filename += '.csv'
     
     log_audit(
-        actor=flask_session.get('email', 'admin'),
+        actor=flask_session.get('admin_username', 'admin'),
         action='export_csv',
         target='data',
-        payload={}
+        payload={'frente': frente, 'department': department, 'role': role}
     )
     
-    return send_file(filepath, as_attachment=True, download_name='oaz_profiler_export.csv')
+    return send_file(filepath, as_attachment=True, download_name=filename)
 
 @bp.route('/export.xlsx', methods=['GET'])
 @require_admin
 def export_xlsx():
-    """Export assessment results to Excel."""
-    filepath = export_to_xlsx()
+    """Export assessment results to Excel with optional filters."""
+    frente = request.args.get('frente')
+    department = request.args.get('department')
+    role = request.args.get('role')
+    
+    filepath = export_to_xlsx(frente=frente, department=department, role=role)
+    
+    filter_parts = []
+    if frente:
+        filter_parts.append(frente.lower())
+    if department:
+        filter_parts.append(department.lower().replace(' ', '_'))
+    if role:
+        filter_parts.append(role.lower().replace(' ', '_'))
+    
+    filename = 'oaz_profiler'
+    if filter_parts:
+        filename += '_' + '_'.join(filter_parts)
+    filename += '.xlsx'
     
     log_audit(
-        actor=flask_session.get('email', 'admin'),
+        actor=flask_session.get('admin_username', 'admin'),
         action='export_xlsx',
         target='data',
-        payload={}
+        payload={'frente': frente, 'department': department, 'role': role}
     )
     
-    return send_file(filepath, as_attachment=True, download_name='oaz_profiler_export.xlsx')
+    return send_file(filepath, as_attachment=True, download_name=filename)
 
 @bp.route('/stats/global', methods=['GET'])
 @require_admin
