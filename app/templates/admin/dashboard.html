@@ -4,6 +4,17 @@
 
 {% block content %}
 <div x-data="adminDashboard()" x-init="loadData()">
+    <!-- Loading Overlay -->
+    <div x-show="isLoading" 
+         x-cloak
+         class="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center"
+         style="backdrop-filter: blur(2px);">
+        <div class="flex flex-col items-center gap-3">
+            <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-gray-600 font-medium">Carregando gráficos...</p>
+        </div>
+    </div>
+
     <div class="mb-6">
         <h2 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Administrativo</h2>
         <p class="text-gray-600">Visão geral das avaliações e proficiências em IA</p>
@@ -35,22 +46,26 @@
     <div class="mb-6 border-b border-gray-200">
         <nav class="flex space-x-8">
             <button @click="switchTab('global')" 
-                    :class="activeTab === 'global' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    :disabled="isLoading"
+                    :class="[activeTab === 'global' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700', isLoading ? 'opacity-50 cursor-not-allowed' : '']"
                     class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                 OAZ Global
             </button>
             <button @click="switchTab('frentes')" 
-                    :class="activeTab === 'frentes' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    :disabled="isLoading"
+                    :class="[activeTab === 'frentes' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700', isLoading ? 'opacity-50 cursor-not-allowed' : '']"
                     class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                 Por Frente
             </button>
             <button @click="switchTab('departments')" 
-                    :class="activeTab === 'departments' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    :disabled="isLoading"
+                    :class="[activeTab === 'departments' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700', isLoading ? 'opacity-50 cursor-not-allowed' : '']"
                     class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                 Por Departamento
             </button>
             <button @click="switchTab('roles')" 
-                    :class="activeTab === 'roles' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    :disabled="isLoading"
+                    :class="[activeTab === 'roles' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700', isLoading ? 'opacity-50 cursor-not-allowed' : '']"
                     class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                 Por Cargo
             </button>
@@ -549,83 +564,86 @@ function adminDashboard() {
         roleSearch: '',
         roleCompareOpen: false,
         roleCompareSearch: '',
-        // Debounce timers
-        renderTimers: {
-            global: null,
-            frente: null,
-            dept: null,
-            role: null,
-            deptCompare: null,
-            roleCompare: null,
-            tab: null
-        },
+        isLoading: false,
+        renderQueue: null,
         
-        // Cancel previous timer and schedule new render
-        scheduleRender(key, fn, delay = 50) {
-            if (this.renderTimers[key]) {
-                clearTimeout(this.renderTimers[key]);
+        async safeRender(fn) {
+            if (this.isLoading) return;
+            this.isLoading = true;
+            
+            if (this.renderQueue) {
+                clearTimeout(this.renderQueue);
             }
-            this.renderTimers[key] = setTimeout(() => {
-                fn();
-                this.renderTimers[key] = null;
-            }, delay);
+            
+            await new Promise(resolve => {
+                this.renderQueue = setTimeout(async () => {
+                    try {
+                        fn();
+                    } catch (err) {
+                        console.error('Chart render error:', err);
+                    } finally {
+                        await new Promise(r => setTimeout(r, 150));
+                        this.isLoading = false;
+                        this.renderQueue = null;
+                    }
+                    resolve();
+                }, 50);
+            });
         },
         
         async loadData() {
             try {
+                this.isLoading = true;
                 const res = await fetch('/admin/stats/all');
                 this.stats = await res.json();
                 
-                // Set default selections
                 if (this.stats.frentes) {
                     this.selectedFrente = Object.keys(this.stats.frentes)[0];
                 }
                 if (this.stats.departments) {
                     const depts = Object.keys(this.stats.departments);
                     this.selectedDept = depts[0];
-                    // Default top 5 for comparison
                     this.selectedDeptsCompare = depts.slice(0, 5);
                 }
                 if (this.stats.roles) {
                     const roles = Object.keys(this.stats.roles);
                     this.selectedRole = roles[0];
-                    // Default top 5 for comparison
                     this.selectedRolesCompare = roles.slice(0, 5);
                 }
                 
-                this.scheduleRender('global', () => this.renderGlobalCharts(), 100);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                this.renderGlobalCharts();
+                await new Promise(resolve => setTimeout(resolve, 200));
+                this.isLoading = false;
                 
             } catch (err) {
                 console.error('Error loading data:', err);
+                this.isLoading = false;
             }
         },
         
-        switchTab(tab) {
+        async switchTab(tab) {
+            if (this.isLoading || this.activeTab === tab) return;
+            
             this.activeTab = tab;
-            // Cancel all pending renders first
-            Object.keys(this.renderTimers).forEach(key => {
-                if (this.renderTimers[key]) {
-                    clearTimeout(this.renderTimers[key]);
-                    this.renderTimers[key] = null;
-                }
-            });
-            // Schedule new render with longer delay for tab switch
-            this.scheduleRender('tab', () => {
+            await this.safeRender(() => {
                 if (tab === 'global') this.renderGlobalCharts();
                 if (tab === 'frentes') this.renderFrenteCharts();
                 if (tab === 'departments') this.renderDeptCharts();
                 if (tab === 'roles') this.renderRoleCharts();
-            }, 150);
+            });
         },
         
-        selectFrente(frente) {
+        async selectFrente(frente) {
+            if (this.isLoading) return;
             this.selectedFrente = frente;
-            this.scheduleRender('frente', () => this.renderFrenteCharts(), 100);
+            await this.safeRender(() => this.renderFrenteCharts());
         },
         
-        selectDept(dept) {
+        async selectDept(dept) {
+            if (this.isLoading) return;
             this.selectedDept = dept;
-            this.scheduleRender('dept', () => this.renderDeptCharts(), 100);
+            await this.safeRender(() => this.renderDeptCharts());
         },
         
         handleDeptSelect(dept) {
@@ -634,9 +652,10 @@ function adminDashboard() {
             this.deptSearch = '';
         },
         
-        selectRole(role) {
+        async selectRole(role) {
+            if (this.isLoading) return;
             this.selectedRole = role;
-            this.scheduleRender('role', () => this.renderRoleCharts(), 100);
+            await this.safeRender(() => this.renderRoleCharts());
         },
         
         handleRoleSelect(role) {
@@ -657,7 +676,8 @@ function adminDashboard() {
             this.roleCompareOpen = false;
         },
         
-        toggleDeptCompare(dept) {
+        async toggleDeptCompare(dept) {
+            if (this.isLoading) return;
             const idx = this.selectedDeptsCompare.indexOf(dept);
             if (idx === -1) {
                 if (this.selectedDeptsCompare.length < 10) {
@@ -666,10 +686,11 @@ function adminDashboard() {
             } else {
                 this.selectedDeptsCompare.splice(idx, 1);
             }
-            this.scheduleRender('deptCompare', () => this.renderDepartmentsComparisonChart(), 100);
+            await this.safeRender(() => this.renderDepartmentsComparisonChart());
         },
         
-        toggleRoleCompare(role) {
+        async toggleRoleCompare(role) {
+            if (this.isLoading) return;
             const idx = this.selectedRolesCompare.indexOf(role);
             if (idx === -1) {
                 if (this.selectedRolesCompare.length < 10) {
@@ -678,7 +699,7 @@ function adminDashboard() {
             } else {
                 this.selectedRolesCompare.splice(idx, 1);
             }
-            this.scheduleRender('roleCompare', () => this.renderRolesComparisonChart(), 100);
+            await this.safeRender(() => this.renderRolesComparisonChart());
         },
         
         getCanvas(canvasId) {
