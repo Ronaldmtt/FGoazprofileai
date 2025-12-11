@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, render_template, redirect, url_fo
 from app.models import Session, User
 from app.agents.orchestrator_matrix import AgentOrchestratorMatrix
 from app.core.security import sanitize_input
+from app.services.logger import assessment_logger
 from app import db
 from datetime import datetime
 
@@ -21,8 +22,11 @@ def require_auth(f):
 @require_auth
 def start_page():
     """Render session start page with P0 question."""
+    assessment_logger.event_start('assessment_start_page_load')
     user_id = flask_session.get('user_id')
     user = User.query.get(user_id)
+    
+    assessment_logger.event_info('assessment_start_page_load', {'user_id': user_id})
     
     active_session = Session.query.filter_by(
         user_id=user_id,
@@ -30,18 +34,23 @@ def start_page():
     ).first()
     
     if active_session:
-        # IMPORTANT: Restore session_id to flask_session to prevent redirect loop
-        # This happens when user has active session but session_id expired in browser
         flask_session['session_id'] = active_session.id
+        assessment_logger.event_info('assessment_start_page_load', {'action': 'redirect_to_active_session', 'session_id': active_session.id})
+        assessment_logger.event_end('assessment_start_page_load')
         return redirect(url_for('items.next_page'))
     
+    assessment_logger.event_success('assessment_start_page_load')
+    assessment_logger.event_end('assessment_start_page_load')
     return render_template('start.html', user=user)
 
 @bp.route('/start', methods=['POST'])
 @require_auth
 def start():
     """Start new assessment session with P0 response."""
+    assessment_logger.event_start('assessment_session_create')
     user_id = flask_session.get('user_id')
+    
+    assessment_logger.event_info('assessment_session_create', {'user_id': user_id})
     
     active_session = Session.query.filter_by(
         user_id=user_id,
@@ -49,12 +58,16 @@ def start():
     ).first()
     
     if active_session:
+        assessment_logger.event_error('assessment_session_create', details={'reason': 'session_already_active', 'session_id': active_session.id})
+        assessment_logger.event_end('assessment_session_create')
         return jsonify({'error': 'Já existe uma sessão ativa'}), 400
     
     data = request.get_json()
     initial_response = sanitize_input(data.get('initial_response', ''))
     
     if not initial_response or len(initial_response) < 5:
+        assessment_logger.event_error('assessment_session_create', details={'reason': 'invalid_initial_response'})
+        assessment_logger.event_end('assessment_session_create')
         return jsonify({'error': 'Por favor, forneça uma resposta inicial'}), 400
     
     session = Session()
@@ -67,6 +80,9 @@ def start():
     
     flask_session['session_id'] = session.id
     
+    assessment_logger.event_success('assessment_session_create', {'session_id': session.id, 'user_id': user_id})
+    assessment_logger.event_end('assessment_session_create')
+    
     return jsonify({
         'session_id': session.id,
         'message': 'Sessão iniciada com sucesso',
@@ -77,30 +93,43 @@ def start():
 @require_auth
 def finish():
     """Finish current session and save final results."""
+    assessment_logger.event_start('assessment_finish')
     session_id = flask_session.get('session_id')
     
     if not session_id:
+        assessment_logger.event_error('assessment_finish', details={'reason': 'no_active_session'})
+        assessment_logger.event_end('assessment_finish')
         return jsonify({'error': 'Nenhuma sessão ativa'}), 400
+    
+    assessment_logger.event_info('assessment_finish', {'session_id': session_id})
     
     session = Session.query.get(session_id)
     
     if not session or session.status != 'active':
+        assessment_logger.event_error('assessment_finish', details={'reason': 'invalid_session', 'session_id': session_id})
+        assessment_logger.event_end('assessment_finish')
         return jsonify({'error': 'Sessão inválida'}), 400
     
-    orchestrator = AgentOrchestratorMatrix(session_id)
+    assessment_logger.event_info('assessment_finish', {'action': 'calling_orchestrator_finalize'})
     
-    # finalize_assessment() updates session.status to 'completed' and commits
+    orchestrator = AgentOrchestratorMatrix(session_id)
     final_results = orchestrator.finalize_assessment()
     
-    # Refresh session to get updated status
     db.session.refresh(session)
     
-    # Update time tracking
     session.ended_at = datetime.utcnow()
     session.time_spent_s = int((session.ended_at - session.started_at).total_seconds())
     db.session.commit()
     
     flask_session.pop('session_id', None)
+    
+    assessment_logger.event_success('assessment_finish', {
+        'session_id': session_id,
+        'time_spent_s': session.time_spent_s,
+        'raw_score': final_results.get('raw_score'),
+        'maturity_level': final_results.get('maturity_level')
+    })
+    assessment_logger.event_end('assessment_finish')
     
     return jsonify({
         'message': 'Avaliação concluída!',
@@ -112,7 +141,10 @@ def finish():
 @require_auth
 def result():
     """Show assessment results to user (matrix-based)."""
+    assessment_logger.event_start('assessment_result_view')
     user_id = flask_session.get('user_id')
+    
+    assessment_logger.event_info('assessment_result_view', {'user_id': user_id})
     
     session = Session.query.filter_by(
         user_id=user_id,
@@ -120,6 +152,8 @@ def result():
     ).order_by(Session.ended_at.desc()).first()
     
     if not session:
+        assessment_logger.event_error('assessment_result_view', details={'reason': 'no_completed_session'})
+        assessment_logger.event_end('assessment_result_view')
         return render_template('error.html',
             message='Nenhuma avaliação concluída encontrada.')
     
@@ -128,8 +162,17 @@ def result():
     snapshot = ProficiencySnapshot.query.filter_by(session_id=session.id).first()
     
     if not snapshot:
+        assessment_logger.event_error('assessment_result_view', details={'reason': 'no_snapshot', 'session_id': session.id})
+        assessment_logger.event_end('assessment_result_view')
         return render_template('error.html',
             message='Resultados não encontrados para esta avaliação.')
+    
+    assessment_logger.event_success('assessment_result_view', {
+        'session_id': session.id,
+        'raw_score': snapshot.raw_score,
+        'maturity_level': snapshot.maturity_level
+    })
+    assessment_logger.event_end('assessment_result_view')
     
     return render_template('result_matrix.html',
         assessment_session=session,
