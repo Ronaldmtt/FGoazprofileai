@@ -3,6 +3,7 @@ from app.models import User, Session, Item, Response, ProficiencySnapshot
 from app.agents.content_qa import AgentContentQA
 from app.services.exporter import export_to_csv, export_to_xlsx
 from app.services.analytics import get_global_stats, get_frente_stats, get_department_stats, get_role_stats, get_complete_dashboard_data
+from app.services.logger import admin_logger, export_logger
 from app.core.utils import log_audit
 from app.core.scoring import IRTScorer
 from app import db
@@ -25,20 +26,25 @@ def require_admin(f):
 @bp.route('/login', methods=['GET'])
 def login_page():
     """Admin login page."""
+    admin_logger.event_start('admin_login_page_load')
+    admin_logger.event_success('admin_login_page_load')
     return render_template('admin/login.html')
 
 @bp.route('/login', methods=['POST'])
 def login():
     """Authenticate admin user."""
+    admin_logger.event_start('admin_login_attempt')
     data = request.get_json() if request.is_json else request.form
     username = data.get('username', '').strip()
     password = data.get('password', '').strip()
     
-    # Get admin credentials from environment
+    admin_logger.event_info('admin_login_attempt', {'username': username})
+    
     admin_username = os.environ.get('ADMIN_LOGIN', 'admin')
     admin_password = os.environ.get('ADMIN_PASSWORD', '')
     
     if not admin_password:
+        admin_logger.event_error('admin_login_attempt', details={'reason': 'credentials_not_configured'})
         return jsonify({'error': 'Credenciais de admin não configuradas'}), 500
     
     if username == admin_username and password == admin_password:
@@ -52,33 +58,45 @@ def login():
             payload={}
         )
         
+        admin_logger.event_success('admin_login_attempt', {'username': username})
+        admin_logger.event_end('admin_login_attempt')
         return jsonify({'success': True, 'redirect': url_for('admin.dashboard')})
     
+    admin_logger.event_error('admin_login_attempt', details={'reason': 'invalid_credentials', 'username': username})
+    admin_logger.event_end('admin_login_attempt')
     return jsonify({'error': 'Usuário ou senha incorretos'}), 401
 
 @bp.route('/logout', methods=['POST', 'GET'])
 def logout():
     """Logout admin user."""
+    admin_logger.event_start('admin_logout')
+    username = flask_session.get('admin_username', 'unknown')
     flask_session.pop('is_admin', None)
     flask_session.pop('admin_username', None)
+    admin_logger.event_success('admin_logout', {'username': username})
+    admin_logger.event_end('admin_logout')
     return redirect(url_for('admin.login_page'))
 
 @bp.route('/dashboard', methods=['GET'])
 @require_admin
 def dashboard():
     """Admin dashboard with overview metrics."""
+    admin_logger.event_start('dashboard_load')
+    admin_logger.event_success('dashboard_load')
+    admin_logger.event_end('dashboard_load')
     return render_template('admin/dashboard.html')
 
 @bp.route('/overview', methods=['GET'])
 @require_admin
 def overview():
     """Get overview metrics for dashboard (matrix-based)."""
+    admin_logger.event_start('overview_metrics_load')
+    
     total_users = User.query.count()
     total_sessions = Session.query.count()
     completed_sessions = Session.query.filter_by(status='completed').count()
     active_sessions = Session.query.filter_by(status='active').count()
     
-    # NEW: Use matrix maturity levels
     level_distribution = {
         'Iniciante': 0,
         'Explorador': 0,
@@ -86,13 +104,18 @@ def overview():
         'Líder Digital': 0
     }
     
-    # Get maturity level distribution from snapshots
     snapshots = ProficiencySnapshot.query.all()
     for snapshot in snapshots:
         if snapshot.maturity_level and snapshot.maturity_level in level_distribution:
             level_distribution[snapshot.maturity_level] += 1
     
     participation_rate = (completed_sessions / total_users * 100) if total_users > 0 else 0
+    
+    admin_logger.event_success('overview_metrics_load', {
+        'total_users': total_users,
+        'completed_sessions': completed_sessions
+    })
+    admin_logger.event_end('overview_metrics_load')
     
     return jsonify({
         'total_users': total_users,
@@ -107,9 +130,11 @@ def overview():
 @require_admin
 def heatmap():
     """Get block heatmap data (matrix-based)."""
+    admin_logger.event_start('heatmap_data_load')
     from app.core.blocks_config import BLOCKS
     
     group_by = request.args.get('group_by', 'all')
+    admin_logger.event_info('heatmap_data_load', {'group_by': group_by})
     
     if group_by == 'all':
         # Get average scores per block across all users
@@ -136,6 +161,8 @@ def heatmap():
                     'count': 0
                 }
         
+        admin_logger.event_success('heatmap_data_load', {'group_by': 'all'})
+        admin_logger.event_end('heatmap_data_load')
         return jsonify(block_stats)
     
     elif group_by == 'department':
@@ -169,21 +196,29 @@ def heatmap():
                 else:
                     department_data[dept][block_name] = 0
         
+        admin_logger.event_success('heatmap_data_load', {'group_by': 'department'})
+        admin_logger.event_end('heatmap_data_load')
         return jsonify(department_data)
     
+    admin_logger.event_end('heatmap_data_load')
     return jsonify({})
 
 @bp.route('/users', methods=['GET'])
 @require_admin
 def users_list():
     """List all users with their assessment results."""
+    admin_logger.event_start('users_list_page_load')
+    admin_logger.event_success('users_list_page_load')
+    admin_logger.event_end('users_list_page_load')
     return render_template('admin/users.html')
 
 @bp.route('/users/data', methods=['GET'])
 @require_admin
 def users_data():
     """Get list of all users with their scores (matrix-based)."""
+    admin_logger.event_start('users_data_load')
     users = User.query.all()
+    admin_logger.event_info('users_data_load', {'total_users': len(users)})
     
     users_list = []
     for user in users:
@@ -234,29 +269,28 @@ def users_data():
                 'time_spent_s': None
             })
     
+    admin_logger.event_success('users_data_load', {'count': len(users_list)})
+    admin_logger.event_end('users_data_load')
     return jsonify(users_list)
 
 @bp.route('/users/<int:user_id>', methods=['DELETE'])
 @require_admin
 def delete_user(user_id):
     """Delete a user and all related data."""
+    admin_logger.event_start('delete_user', {'user_id': user_id})
     user = User.query.get_or_404(user_id)
     user_email = user.email
     
-    # Get all sessions for this user
+    admin_logger.event_info('delete_user', {'user_email': user_email})
+    
     sessions = Session.query.filter_by(user_id=user_id).all()
     
     for sess in sessions:
-        # Delete responses for this session
         Response.query.filter_by(session_id=sess.id).delete()
-        
-        # Delete proficiency snapshots for this session
         ProficiencySnapshot.query.filter_by(session_id=sess.id).delete()
     
-    # Delete all sessions
     Session.query.filter_by(user_id=user_id).delete()
     
-    # Delete the user
     db.session.delete(user)
     db.session.commit()
     
@@ -267,12 +301,15 @@ def delete_user(user_id):
         payload={'user_id': user_id, 'user_email': user_email}
     )
     
+    admin_logger.event_success('delete_user', {'user_id': user_id, 'user_email': user_email})
+    admin_logger.event_end('delete_user')
     return jsonify({'message': 'Usuário e todos os dados relacionados foram deletados com sucesso'})
 
 @bp.route('/users/<int:user_id>', methods=['GET'])
 @require_admin
 def user_detail(user_id):
     """Get detailed information about a user (matrix-based)."""
+    admin_logger.event_start('user_detail_load', {'user_id': user_id})
     user = User.query.get_or_404(user_id)
     sessions = Session.query.filter_by(user_id=user_id, status='completed').all()
     
@@ -301,6 +338,8 @@ def user_detail(user_id):
                 'block_scores': {}
             })
     
+    admin_logger.event_success('user_detail_load', {'user_id': user_id})
+    admin_logger.event_end('user_detail_load')
     return jsonify({
         'user': {
             'id': user.id,
@@ -453,9 +492,13 @@ def export_csv():
     """Export assessment results to CSV with optional filters."""
     from flask import Response
     
+    export_logger.event_start('export_csv')
+    
     frente = request.args.get('frente')
     department = request.args.get('department')
     role = request.args.get('role')
+    
+    export_logger.event_info('export_csv', {'frente': frente, 'department': department, 'role': role})
     
     filepath = export_to_csv(frente=frente, department=department, role=role)
     
@@ -491,15 +534,21 @@ def export_csv():
             'Cache-Control': 'no-cache, no-store, must-revalidate'
         }
     )
+    export_logger.event_success('export_csv', {'filename': filename, 'size': len(csv_content)})
+    export_logger.event_end('export_csv')
     return response
 
 @bp.route('/export.xlsx', methods=['GET'])
 @require_admin
 def export_xlsx():
     """Export assessment results to Excel with optional filters."""
+    export_logger.event_start('export_xlsx')
+    
     frente = request.args.get('frente')
     department = request.args.get('department')
     role = request.args.get('role')
+    
+    export_logger.event_info('export_xlsx', {'frente': frente, 'department': department, 'role': role})
     
     filepath = export_to_xlsx(frente=frente, department=department, role=role)
     
@@ -523,34 +572,56 @@ def export_xlsx():
         payload={'frente': frente, 'department': department, 'role': role}
     )
     
+    export_logger.event_success('export_xlsx', {'filename': filename})
+    export_logger.event_end('export_xlsx')
     return send_file(filepath, as_attachment=True, download_name=filename)
 
 @bp.route('/stats/global', methods=['GET'])
 @require_admin
 def stats_global():
     """Get global OAZ statistics."""
-    return jsonify(get_global_stats())
+    admin_logger.event_start('stats_global_load')
+    result = get_global_stats()
+    admin_logger.event_success('stats_global_load')
+    admin_logger.event_end('stats_global_load')
+    return jsonify(result)
 
 @bp.route('/stats/frentes', methods=['GET'])
 @require_admin
 def stats_frentes():
     """Get statistics by frente (SOUQ, THESAINT)."""
-    return jsonify(get_frente_stats())
+    admin_logger.event_start('stats_frentes_load')
+    result = get_frente_stats()
+    admin_logger.event_success('stats_frentes_load')
+    admin_logger.event_end('stats_frentes_load')
+    return jsonify(result)
 
 @bp.route('/stats/departments', methods=['GET'])
 @require_admin
 def stats_departments():
     """Get statistics by department."""
-    return jsonify(get_department_stats())
+    admin_logger.event_start('stats_departments_load')
+    result = get_department_stats()
+    admin_logger.event_success('stats_departments_load')
+    admin_logger.event_end('stats_departments_load')
+    return jsonify(result)
 
 @bp.route('/stats/roles', methods=['GET'])
 @require_admin
 def stats_roles():
     """Get statistics by role/cargo."""
-    return jsonify(get_role_stats())
+    admin_logger.event_start('stats_roles_load')
+    result = get_role_stats()
+    admin_logger.event_success('stats_roles_load')
+    admin_logger.event_end('stats_roles_load')
+    return jsonify(result)
 
 @bp.route('/stats/all', methods=['GET'])
 @require_admin
 def stats_all():
     """Get complete dashboard statistics."""
-    return jsonify(get_complete_dashboard_data())
+    admin_logger.event_start('stats_all_load')
+    result = get_complete_dashboard_data()
+    admin_logger.event_success('stats_all_load')
+    admin_logger.event_end('stats_all_load')
+    return jsonify(result)
