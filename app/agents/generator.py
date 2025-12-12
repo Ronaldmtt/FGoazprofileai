@@ -3,9 +3,7 @@ import json
 import random
 from app.core.llm_provider import LLMProvider
 from app.models import Item
-import logging
-
-logger = logging.getLogger(__name__)
+from app.services.logger import llm_logger
 
 class AgentGenerator:
     """
@@ -40,7 +38,7 @@ class AgentGenerator:
         """
         from app.core.blocks_config import BLOCKS
         
-        logger.info(f"Generating MACRO (transversal) question for block: {block_name}")
+        llm_logger.event_start('generate_matrix_question', {'block': block_name})
         
         if not user_context:
             user_context = {'name': 'Usuário'}
@@ -162,10 +160,10 @@ LEMBRE-SE:
         try:
             # Skip if LLM provider is stub
             if self.llm.provider == 'stub' or not self.llm.client:
-                logger.warning("[ADAPTIVE] OpenAI not available, skipping generation")
+                llm_logger.event_warning('openai_not_available', {'block': block_name})
                 return None
             
-            logger.info(f"[ADAPTIVE] Calling OpenAI for MACRO (transversal) question generation - block: {block_name}")
+            llm_logger.event_info('openai_call_start', {'block': block_name, 'type': 'macro_transversal'})
             
             response = self.llm.client.chat.completions.create(
                 model="gpt-4o",
@@ -183,22 +181,19 @@ LEMBRE-SE:
                 max_completion_tokens=600
             )
             
-            # Log response for debugging
-            logger.info(f"[ADAPTIVE] OpenAI response object: {response}")
-            logger.info(f"[ADAPTIVE] Response choices: {response.choices}")
+            llm_logger.event_info('openai_response_received', {'block': block_name})
             
             message = response.choices[0].message
             raw_content = message.content
             
-            # Check for refusal
             if hasattr(message, 'refusal') and message.refusal:
-                logger.error(f"[ADAPTIVE] OpenAI REFUSED to generate: {message.refusal}")
+                llm_logger.event_error('openai_refused', details={'block': block_name, 'refusal': message.refusal})
                 return None
             
-            logger.info(f"[ADAPTIVE] OpenAI raw response (first 200 chars): {raw_content[:200] if raw_content else 'EMPTY/NONE'}")
+            llm_logger.event_info('openai_content_parsed', {'block': block_name, 'length': len(raw_content) if raw_content else 0})
             
             if not raw_content:
-                logger.error("[ADAPTIVE] OpenAI returned empty content!")
+                llm_logger.event_error('openai_empty_content', details={'block': block_name})
                 return None
             
             question_data = json.loads(raw_content)
@@ -223,7 +218,10 @@ LEMBRE-SE:
             # points_mapping: maps position (0=A, 1=B, 2=C, 3=D) to points
             points_mapping = {i: c[1] for i, c in enumerate(choices_with_points)}
             
-            logger.info(f"[ADAPTIVE] Shuffled choices. Points mapping: A={points_mapping.get(0)}, B={points_mapping.get(1)}, C={points_mapping.get(2)}, D={points_mapping.get(3)}")
+            llm_logger.event_success('generate_matrix_question', {
+                'block': block_name, 
+                'points_mapping': points_mapping
+            })
             
             # Build complete item data for matrix format
             return {
@@ -242,8 +240,7 @@ LEMBRE-SE:
             }
             
         except Exception as e:
-            logger.error(f"[ADAPTIVE] ERROR generating question: {e}")
-            # Return None - NO fallback to generic questions
+            llm_logger.event_error('generate_matrix_question_failed', error=e, details={'block': block_name})
             return None
     
     def generate_variation(self, original_item: Dict[str, Any]) -> Dict[str, Any]:

@@ -10,6 +10,61 @@
     <style>
         [x-cloak] { display: none !important; }
     </style>
+    <script>
+    window.rpaLog = {
+        send: function(type, action, details) {
+            fetch('/admin/frontend-log', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: type, action: action, details: details || {}})
+            }).catch(function(e) { console.log('RPA log error:', e); });
+        },
+        click: function(action, details) { this.send('click', action, details); },
+        tab: function(action, details) { this.send('tab', action, details); },
+        form: function(action, details) { this.send('form', action, details); },
+        page: function(action, details) { this.send('page', action, details); },
+        error: function(action, details) { this.send('error', action, details); }
+    };
+    document.addEventListener('DOMContentLoaded', function() {
+        var pagePath = window.location.pathname;
+        rpaLog.page('load', {path: pagePath, title: document.title, area: 'admin'});
+        document.addEventListener('click', function(e) {
+            var target = e.target;
+            var tagName = target.tagName.toLowerCase();
+            if (tagName === 'button' || tagName === 'a' || target.closest('button') || target.closest('a')) {
+                var btn = target.closest('button') || target.closest('a') || target;
+                var text = btn.innerText ? btn.innerText.substring(0, 50) : '';
+                var id = btn.id || '';
+                var cls = btn.className ? btn.className.substring(0, 100) : '';
+                var href = btn.href || '';
+                rpaLog.click('button', {text: text, id: id, class: cls, href: href, page: pagePath, area: 'admin'});
+            }
+        });
+        document.querySelectorAll('form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                var formId = form.id || form.action || 'unknown';
+                rpaLog.form('submit', {form_id: formId, page: pagePath, area: 'admin'});
+            });
+        });
+        document.querySelectorAll('[role="tab"], .tab, [data-tab], button[class*="tab"]').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var tabName = tab.innerText || tab.getAttribute('data-tab') || 'unknown';
+                rpaLog.tab('click', {tab: tabName, page: pagePath, area: 'admin'});
+            });
+        });
+        document.querySelectorAll('input, select, textarea').forEach(function(input) {
+            input.addEventListener('change', function() {
+                var inputName = input.name || input.id || 'unknown';
+                var inputType = input.type || input.tagName.toLowerCase();
+                rpaLog.send('input', 'change', {name: inputName, type: inputType, page: pagePath, area: 'admin'});
+            });
+        });
+    });
+    window.onerror = function(msg, url, line, col, error) {
+        rpaLog.error('js_error', {message: msg, url: url, line: line, col: col, area: 'admin'});
+        return false;
+    };
+    </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-white shadow-sm border-b border-gray-200">

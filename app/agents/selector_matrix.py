@@ -7,10 +7,8 @@ from typing import Dict, Any, List, Optional
 from app.models import Item
 from app.agents.generator import AgentGenerator
 from app.core.blocks_config import BLOCKS
+from app.services.logger import agent_logger
 from app import db
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class AgentSelectorMatrix:
@@ -59,10 +57,10 @@ class AgentSelectorMatrix:
         next_block = self._get_next_block(response_history)
         
         if not next_block:
-            logger.info("[MATRIX] All questions completed")
+            agent_logger.event_info('selector_all_questions_completed', {'session_id': session_id})
             return None
         
-        logger.info(f"[MATRIX] Generating question for block: {next_block}")
+        agent_logger.event_info('selector_generating_question', {'session_id': session_id, 'block': next_block})
         
         # Generate question for this block
         generated_data = self.generator.generate_matrix_question(
@@ -72,7 +70,7 @@ class AgentSelectorMatrix:
         )
         
         if not generated_data:
-            logger.error(f"[MATRIX] Failed to generate question for {next_block}")
+            agent_logger.event_error('selector_generation_failed', details={'block': next_block, 'session_id': session_id})
             return None
         
         # Create and save item
@@ -93,7 +91,7 @@ class AgentSelectorMatrix:
         db.session.add(generated_item)
         db.session.commit()
         
-        logger.info(f"[MATRIX] Created item ID {generated_item.id} for block {next_block}")
+        agent_logger.event_success('selector_item_created', {'item_id': generated_item.id, 'block': next_block, 'session_id': session_id})
         return generated_item
     
     def _get_next_block(self, response_history: List[Dict[str, Any]]) -> Optional[str]:
@@ -120,7 +118,7 @@ class AgentSelectorMatrix:
             if block and block in block_counts:
                 block_counts[block] += 1
         
-        logger.info(f"[MATRIX] Current block distribution: {block_counts}")
+        agent_logger.event_info('selector_block_distribution', block_counts)
         
         # Find next block that needs questions
         for block_name, config in BLOCKS.items():
@@ -128,7 +126,7 @@ class AgentSelectorMatrix:
             current_count = block_counts.get(block_name, 0)
             
             if current_count < target_count:
-                logger.info(f"[MATRIX] Block '{block_name}' needs question ({current_count}/{target_count})")
+                agent_logger.event_info('selector_next_block', {'block': block_name, 'current': current_count, 'target': target_count})
                 return block_name
         
         # All blocks complete

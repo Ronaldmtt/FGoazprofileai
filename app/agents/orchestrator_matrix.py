@@ -8,10 +8,8 @@ from app.agents.selector_matrix import AgentSelectorMatrix
 from app.agents.grader_matrix import AgentGraderMatrix
 from app.models import Session, Response, Item, ProficiencySnapshot
 from app.core.blocks_config import BLOCKS, MATURITY_LEVELS, TOTAL_QUESTIONS
+from app.services.logger import agent_logger
 from app import db
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class AgentOrchestratorMatrix:
@@ -130,10 +128,13 @@ class AgentOrchestratorMatrix:
             'stem': item.stem
         })
         
-        logger.info(
-            f"[MATRIX] Response processed: {grading_result['points']} pts | "
-            f"Total: {self.state['total_score']}/{self.state['items_answered']*4}"
-        )
+        agent_logger.event_info('orchestrator_response_processed', {
+            'session_id': self.session_id,
+            'item_id': item_id,
+            'points': grading_result['points'],
+            'total_score': self.state['total_score'],
+            'items_answered': self.state['items_answered']
+        })
         
         return {
             'points': grading_result['points'],
@@ -176,10 +177,11 @@ class AgentOrchestratorMatrix:
         # Determine maturity level
         maturity_level = self._classify_maturity_level(total_score)
         
-        logger.info(
-            f"[MATRIX] Assessment finalized: {total_score} points | "
-            f"Level: {maturity_level['name']}"
-        )
+        agent_logger.event_info('orchestrator_finalize_assessment', {
+            'session_id': self.session_id,
+            'total_score': total_score,
+            'maturity_level': maturity_level['name']
+        })
         
         # Save proficiency snapshot
         snapshot = ProficiencySnapshot()
@@ -193,13 +195,17 @@ class AgentOrchestratorMatrix:
         # Update session status to completed (CRITICAL for result rendering)
         if self.session:
             self.session.status = 'completed'
-            logger.info(f"[MATRIX] Session {self.session_id} marked as completed")
+            agent_logger.event_success('orchestrator_session_completed', {'session_id': self.session_id})
         else:
-            logger.error(f"[MATRIX] Session {self.session_id} not found - status not updated!")
+            agent_logger.event_error('orchestrator_session_not_found', details={'session_id': self.session_id})
         
         db.session.commit()
         
-        logger.info(f"[MATRIX] Snapshot saved: {total_score} pts, level={maturity_level['name']}")
+        agent_logger.event_success('orchestrator_snapshot_saved', {
+            'session_id': self.session_id,
+            'total_score': total_score,
+            'maturity_level': maturity_level['name']
+        })
         
         return {
             'total_score': total_score,

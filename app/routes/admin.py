@@ -356,6 +356,7 @@ def user_detail(user_id):
 @require_admin
 def list_items():
     """List all assessment items."""
+    admin_logger.event_start('list_items')
     items = Item.query.all()
     
     items_data = []
@@ -371,18 +372,24 @@ def list_items():
             'tags': item.tags
         })
     
+    admin_logger.event_success('list_items', {'count': len(items_data)})
+    admin_logger.event_end('list_items')
     return jsonify(items_data)
 
 @bp.route('/items', methods=['POST'])
 @require_admin
 def create_item():
     """Create new assessment item with validation."""
+    admin_logger.event_start('create_item')
     data = request.get_json()
     
+    admin_logger.event_info('create_item', {'action': 'validating_item'})
     content_qa = AgentContentQA()
     validation = content_qa.validate_item(data)
     
     if not validation['valid']:
+        admin_logger.event_error('create_item', details={'reason': 'validation_failed', 'issues': validation['issues']})
+        admin_logger.event_end('create_item')
         return jsonify({
             'error': 'Item inválido',
             'issues': validation['issues']
@@ -415,6 +422,8 @@ def create_item():
         payload={'item_id': item.id}
     )
     
+    admin_logger.event_success('create_item', {'item_id': item.id})
+    admin_logger.event_end('create_item')
     return jsonify({
         'message': 'Item criado com sucesso',
         'item_id': item.id
@@ -424,6 +433,9 @@ def create_item():
 @require_admin
 def update_item(item_id):
     """Update existing assessment item."""
+    admin_logger.event_start('update_item')
+    admin_logger.event_info('update_item', {'item_id': item_id})
+    
     item = Item.query.get_or_404(item_id)
     data = request.get_json()
     
@@ -431,6 +443,8 @@ def update_item(item_id):
     validation = content_qa.validate_item(data)
     
     if not validation['valid']:
+        admin_logger.event_error('update_item', details={'reason': 'validation_failed', 'item_id': item_id})
+        admin_logger.event_end('update_item')
         return jsonify({
             'error': 'Item inválido',
             'issues': validation['issues']
@@ -466,12 +480,17 @@ def update_item(item_id):
         payload={'item_id': item.id}
     )
     
+    admin_logger.event_success('update_item', {'item_id': item_id})
+    admin_logger.event_end('update_item')
     return jsonify({'message': 'Item atualizado com sucesso'})
 
 @bp.route('/items/<int:item_id>', methods=['DELETE'])
 @require_admin
 def delete_item(item_id):
     """Delete (deactivate) assessment item."""
+    admin_logger.event_start('delete_item')
+    admin_logger.event_info('delete_item', {'item_id': item_id})
+    
     item = Item.query.get_or_404(item_id)
     
     item.active = False
@@ -484,6 +503,8 @@ def delete_item(item_id):
         payload={'item_id': item.id}
     )
     
+    admin_logger.event_success('delete_item', {'item_id': item_id})
+    admin_logger.event_end('delete_item')
     return jsonify({'message': 'Item desativado com sucesso'})
 
 @bp.route('/export.csv', methods=['GET'])
@@ -625,3 +646,29 @@ def stats_all():
     admin_logger.event_success('stats_all_load')
     admin_logger.event_end('stats_all_load')
     return jsonify(result)
+
+@bp.route('/frontend-log', methods=['POST'])
+def frontend_log():
+    """Receive logs from frontend JavaScript."""
+    from app.services.logger import get_logger
+    frontend_logger = get_logger('frontend')
+    
+    data = request.get_json()
+    event_type = data.get('type', 'info')
+    action = data.get('action', 'unknown')
+    details = data.get('details', {})
+    
+    if event_type == 'click':
+        frontend_logger.event_info(f"user_click_{action}", details)
+    elif event_type == 'tab':
+        frontend_logger.event_info(f"tab_switch_{action}", details)
+    elif event_type == 'form':
+        frontend_logger.event_info(f"form_submit_{action}", details)
+    elif event_type == 'page':
+        frontend_logger.event_info(f"page_view_{action}", details)
+    elif event_type == 'error':
+        frontend_logger.event_error(f"frontend_error_{action}", details=details)
+    else:
+        frontend_logger.event_info(f"frontend_{action}", details)
+    
+    return jsonify({'status': 'logged'})

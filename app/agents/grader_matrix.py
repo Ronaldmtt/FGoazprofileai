@@ -5,9 +5,7 @@ Uses dynamic points mapping from item metadata (shuffled order)
 
 from typing import Dict, Any
 from app.models import Item
-import logging
-
-logger = logging.getLogger(__name__)
+from app.services.logger import agent_logger
 
 
 class AgentGraderMatrix:
@@ -59,12 +57,12 @@ class AgentGraderMatrix:
         if points_mapping:
             # Use dynamic mapping (shuffled order)
             points = points_mapping.get(answer_index, 1)
-            logger.info(f"[GRADER] Answer '{answer}' (index {answer_index}) → {points} points (from mapping)")
+            agent_logger.event_info('grader_score_calculated', {'answer': answer, 'index': answer_index, 'points': points, 'method': 'mapping'})
         else:
             # Fallback to legacy fixed mapping for old questions
             legacy_points = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
             points = legacy_points.get(answer, 1)
-            logger.info(f"[GRADER] Answer '{answer}' → {points} points (legacy fixed mapping)")
+            agent_logger.event_info('grader_score_calculated', {'answer': answer, 'points': points, 'method': 'legacy'})
         
         return {
             'points': points,
