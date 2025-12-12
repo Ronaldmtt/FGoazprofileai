@@ -1,12 +1,14 @@
 """
 Centralized logging service for RPA monitoring.
 Provides structured logging with event tracking for all system operations.
+Integrates with rpa_monitor_client for remote monitoring.
 """
 import logging
 import sys
-from datetime import datetime
-from functools import wraps
+import time
 import traceback
+from functools import wraps
+from typing import Optional
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,6 +18,14 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ]
 )
+
+try:
+    from rpa_monitor_client import rpa_log
+    RPA_AVAILABLE = True
+except ImportError:
+    RPA_AVAILABLE = False
+    rpa_log = None
+
 
 class RPALogger:
     """Structured logger for RPA monitoring system."""
@@ -32,20 +42,47 @@ class RPALogger:
             msg += f" | {detail_str}"
         return msg
     
+    def _send_to_rpa(self, level: str, msg: str, exc: Exception = None, regiao: str = None):
+        """Send log to RPA Monitor if available."""
+        if not RPA_AVAILABLE or not rpa_log:
+            return
+        
+        try:
+            region = regiao or self.module
+            if level == 'INFO':
+                rpa_log.info(msg, regiao=region)
+            elif level == 'WARN':
+                rpa_log.warn(msg, regiao=region)
+            elif level == 'ERROR':
+                rpa_log.error(msg, exc=exc, regiao=region)
+                try:
+                    rpa_log.screenshot(
+                        filename=f"error_{self.module}_{int(time.time())}.png",
+                        regiao=region,
+                        nivel="ERROR"
+                    )
+                except Exception:
+                    pass
+        except Exception as e:
+            self.logger.debug(f"RPA log failed: {e}")
+    
     def event_start(self, action: str, details: dict = None):
         """Log the start of an event/action."""
         msg = self._format_message("START", action, details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def event_end(self, action: str, details: dict = None):
         """Log the end of an event/action."""
         msg = self._format_message("END", action, details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def event_success(self, action: str, details: dict = None):
         """Log successful completion of an action."""
         msg = self._format_message("SUCCESS", action, details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def event_error(self, action: str, error: Exception = None, details: dict = None):
         """Log an error during an action."""
@@ -55,6 +92,7 @@ class RPALogger:
             error_details['error_message'] = str(error)
         msg = self._format_message("ERROR", action, error_details)
         self.logger.error(msg)
+        self._send_to_rpa('ERROR', msg, exc=error, regiao=self.module)
         if error:
             self.logger.error(f"[TRACEBACK] {traceback.format_exc()}")
     
@@ -62,6 +100,7 @@ class RPALogger:
         """Log a warning during an action."""
         msg = self._format_message("WARNING", action, details)
         self.logger.warning(msg)
+        self._send_to_rpa('WARN', msg)
     
     def event_debug(self, action: str, details: dict = None):
         """Log debug information."""
@@ -72,6 +111,7 @@ class RPALogger:
         """Log general information."""
         msg = self._format_message("INFO", action, details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def user_action(self, user_id: str, action: str, details: dict = None):
         """Log a user-initiated action."""
@@ -80,6 +120,7 @@ class RPALogger:
             action_details.update(details)
         msg = self._format_message("USER_ACTION", action, action_details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def api_request(self, method: str, endpoint: str, details: dict = None):
         """Log an API request."""
@@ -88,6 +129,7 @@ class RPALogger:
             request_details.update(details)
         msg = self._format_message("API_REQUEST", f"{method} {endpoint}", request_details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def api_response(self, endpoint: str, status_code: int, details: dict = None):
         """Log an API response."""
@@ -96,6 +138,7 @@ class RPALogger:
             response_details.update(details)
         msg = self._format_message("API_RESPONSE", endpoint, response_details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def db_operation(self, operation: str, table: str, details: dict = None):
         """Log a database operation."""
@@ -104,6 +147,7 @@ class RPALogger:
             db_details.update(details)
         msg = self._format_message("DB", f"{operation} on {table}", db_details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
     
     def llm_call(self, model: str, action: str, details: dict = None):
         """Log an LLM API call."""
@@ -112,6 +156,7 @@ class RPALogger:
             llm_details.update(details)
         msg = self._format_message("LLM", action, llm_details)
         self.logger.info(msg)
+        self._send_to_rpa('INFO', msg)
 
 
 def get_logger(module_name: str) -> RPALogger:

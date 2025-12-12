@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 import logging
+import os
 
 # Configure logging for debugging
 logging.basicConfig(
@@ -11,9 +12,38 @@ logging.basicConfig(
 
 db = SQLAlchemy()
 
+def _init_rpa_monitor():
+    """Initialize RPA Monitor client from environment variables."""
+    try:
+        from rpa_monitor_client import setup_rpa_monitor
+        
+        rpa_id = os.environ.get('RPA_MONITOR_ID')
+        host = os.environ.get('RPA_MONITOR_HOST')
+        region = os.environ.get('RPA_MONITOR_REGION', 'default')
+        transport = os.environ.get('RPA_MONITOR_TRANSPORT', 'ws')
+        
+        logging.info(f"RPA Monitor config: id={rpa_id}, host={host}, region={region}, transport={transport}")
+        
+        if rpa_id and host:
+            setup_rpa_monitor(
+                rpa_id=rpa_id,
+                host=host,
+                port=None,
+                region=region,
+                transport=transport,
+            )
+            logging.info(f"RPA Monitor initialized: {rpa_id} -> {host}")
+        else:
+            logging.warning("RPA Monitor not configured - missing RPA_MONITOR_ID or RPA_MONITOR_HOST")
+    except Exception as e:
+        logging.error(f"Failed to initialize RPA Monitor: {e}")
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    
+    # Initialize RPA Monitor
+    _init_rpa_monitor()
     
     db.init_app(app)
     
