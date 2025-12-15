@@ -7,8 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         [x-cloak] { display: none !important; }
+        .tutorial-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .tutorial-modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 450px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .tutorial-modal-close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        #tutorialToggle.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
     </style>
     <script>
     window.rpaLog = {
@@ -64,6 +90,178 @@
         rpaLog.error('js_error', {message: msg, url: url, line: line, col: col, area: 'admin'});
         return false;
     };
+    
+    class TutorialManager {
+        constructor() {
+            this.isActive = localStorage.getItem('tutorialMode') === 'true';
+            this.modal = null;
+            this.init();
+        }
+        
+        init() {
+            this.createModal();
+            this.setupEventListeners();
+            this.updateToggleButton();
+        }
+        
+        createModal() {
+            const modalHTML = `
+            <div id="tutorialModal" class="tutorial-modal" style="display:none;">
+                <div class="tutorial-modal-content">
+                    <span class="tutorial-modal-close">&times;</span>
+                    <h4 id="tutorialModalTitle" style="font-size:18px;font-weight:bold;margin-bottom:10px;"></h4>
+                    <p id="tutorialModalDesc" style="color:#666;"></p>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            this.modal = document.getElementById('tutorialModal');
+            this.modal.querySelector('.tutorial-modal-close').onclick = () => this.hideModal();
+        }
+        
+        setupEventListeners() {
+            document.addEventListener('click', (e) => this.handleInteraction(e), true);
+            document.addEventListener('submit', (e) => this.handleInteraction(e), true);
+            document.addEventListener('change', (e) => this.handleInteraction(e), true);
+            document.addEventListener('focus', (e) => this.handleFocus(e), true);
+        }
+        
+        handleInteraction(e) {
+            if (!this.isActive) return;
+            
+            const target = e.target.closest('button, a, input, select, textarea, [onclick], label, form');
+            if (!target) return;
+            
+            if (target.closest('#tutorialModal, #tutorialToggle, .tutorial-excluded')) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const info = this.getElementInfo(target);
+            this.showModal(info.title, info.desc);
+        }
+        
+        handleFocus(e) {
+            if (!this.isActive) return;
+            const target = e.target;
+            if (target.matches('input, select, textarea, [contenteditable]')) {
+                if (!target.closest('#tutorialModal, .tutorial-excluded')) {
+                    e.preventDefault();
+                    target.blur();
+                }
+            }
+        }
+        
+        getElementInfo(el) {
+            let title = el.getAttribute('data-tutorial-title');
+            let desc = el.getAttribute('data-tutorial-desc');
+            
+            if (title && desc) return { title, desc };
+            
+            title = title || this.generateTitle(el);
+            desc = desc || this.generateDescription(el);
+            
+            return { title, desc };
+        }
+        
+        generateTitle(el) {
+            const text = el.textContent?.trim()?.substring(0, 50);
+            if (text && text.length > 2) return text;
+            
+            const tooltip = el.getAttribute('title') || el.getAttribute('data-bs-original-title');
+            if (tooltip) return tooltip;
+            
+            const icon = el.querySelector('i[class*="fa-"]');
+            if (icon) {
+                const iconClass = [...icon.classList].find(c => c.startsWith('fa-') && c !== 'fa-fw');
+                if (iconClass) return this.iconToTitle(iconClass);
+            }
+            
+            if (el.tagName === 'INPUT') return `Campo ${el.type || 'texto'}`;
+            if (el.tagName === 'SELECT') return 'Seleção';
+            if (el.tagName === 'BUTTON') return 'Botão';
+            
+            return 'Elemento interativo';
+        }
+        
+        generateDescription(el) {
+            if (el.placeholder) return `Digite: ${el.placeholder}`;
+            
+            if (el.getAttribute('aria-label')) return el.getAttribute('aria-label');
+            
+            const label = document.querySelector(`label[for="${el.id}"]`);
+            if (label) return `Campo: ${label.textContent.trim()}`;
+            
+            if (el.tagName === 'A' && el.href) {
+                if (el.href.includes('/edit')) return 'Abre formulário de edição';
+                if (el.href.includes('/delete')) return 'Remove este item';
+                if (el.href.includes('/view') || el.href.includes('/show')) return 'Visualiza detalhes';
+                return 'Navega para outra página';
+            }
+            
+            if (el.type === 'submit') return 'Envia o formulário';
+            
+            return 'Clique para interagir com este elemento';
+        }
+        
+        iconToTitle(iconClass) {
+            const map = {
+                'fa-eye': 'Visualizar',
+                'fa-edit': 'Editar',
+                'fa-trash': 'Excluir',
+                'fa-plus': 'Adicionar',
+                'fa-save': 'Salvar',
+                'fa-download': 'Download',
+                'fa-upload': 'Upload',
+                'fa-search': 'Pesquisar',
+                'fa-filter': 'Filtrar',
+                'fa-refresh': 'Atualizar',
+                'fa-redo': 'Reprocessar',
+                'fa-file-pdf': 'Documento PDF',
+                'fa-camera': 'Captura de tela',
+                'fa-question-circle': 'Ajuda',
+                'fa-chart-bar': 'Gráficos',
+                'fa-users': 'Usuários',
+                'fa-file-excel': 'Excel',
+                'fa-file-csv': 'CSV'
+            };
+            return map[iconClass] || iconClass.replace('fa-', '').replace(/-/g, ' ');
+        }
+        
+        toggle() {
+            this.isActive = !this.isActive;
+            localStorage.setItem('tutorialMode', this.isActive);
+            this.updateToggleButton();
+            
+            if (this.isActive) {
+                document.querySelectorAll('input, textarea, select').forEach(el => el.blur());
+            }
+        }
+        
+        updateToggleButton() {
+            const btn = document.getElementById('tutorialToggle');
+            if (btn) {
+                btn.classList.toggle('active', this.isActive);
+                btn.innerHTML = this.isActive 
+                    ? '<i class="fas fa-question-circle"></i> Tutorial ATIVO'
+                    : '<i class="fas fa-question-circle"></i> Tutorial';
+            }
+        }
+        
+        showModal(title, desc) {
+            document.getElementById('tutorialModalTitle').textContent = title;
+            document.getElementById('tutorialModalDesc').textContent = desc;
+            this.modal.style.display = 'flex';
+        }
+        
+        hideModal() {
+            this.modal.style.display = 'none';
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        window.tutorialManager = new TutorialManager();
+    });
     </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -73,12 +271,15 @@
                 <div class="flex items-center">
                     <h1 class="text-xl font-bold text-gray-900">OAZ IA Profiler</h1>
                 </div>
-                {% if session.get('admin_username') %}
                 <div class="flex items-center space-x-4">
+                    <button id="tutorialToggle" class="tutorial-excluded px-3 py-1 text-sm rounded border border-gray-300 hover:bg-gray-100" onclick="tutorialManager.toggle()" data-tutorial-title="Botão Tutorial" data-tutorial-desc="Liga/desliga o modo tutorial que explica cada elemento da interface.">
+                        <i class="fas fa-question-circle"></i> Tutorial
+                    </button>
+                    {% if session.get('admin_username') %}
                     <span class="text-sm text-gray-600">Admin: {{ session.get('admin_username') }}</span>
-                    <a href="/admin/logout" class="text-sm text-red-600 hover:text-red-800">Sair</a>
+                    <a href="/admin/logout" class="text-sm text-red-600 hover:text-red-800" data-tutorial-title="Sair do Admin" data-tutorial-desc="Encerra a sessão administrativa e retorna à tela de login.">Sair</a>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
         </div>
     </nav>
